@@ -137,7 +137,7 @@ auto operator-(iterator&lt;T&gt; const lhs, iterator&lt;T&gt;::difference_type c
 
 <h2 id="arithmetic-bitwise-and-compound-assignment-operators">Arithmetic, Bitwise, and Compound Assignment Operators</h2>
 
-<p>For all binary arithmetic and bitwise operators, there are corresponding compound assignment operators. There are two obvious ways to implement these pairs of operators without code duplication: implement <code>a += b</code> in terms of <code>a = a + b</code> or implement <code>a = a + b</code> in terms of <code>a += b</code>. Using the compound assignment operator as the basis has a tradition going back to C++98, so let’s consider what that code looks like using <code>string</code> as our example:</p>
+<p>For all binary arithmetic and bitwise operators, there are corresponding compound assignment operators. There are two obvious ways to implement these pairs of operators without code duplication: implement <code>a += b</code> in terms of <code>a = a + b</code> or implement <code>a = a + b</code> in terms of <code>a += b</code>. Using the compound assignment operator as the basis has a tradition going back to C++98, so let's consider what that code looks like using <code>string</code> as our example:</p>
 
 <pre><code>string &amp; operator+=(string &amp; lhs, string const &amp; rhs) {
     lhs.insert(end(lhs), begin(rhs), end(rhs));
@@ -211,7 +211,7 @@ string &amp; operator+=(string &amp; lhs, String &amp;&amp; rhs) {
 
 <p>The third counterexample is all types that are not assignable (for instance, if they contain a const data member). This restriction makes sense conceptually. An implementation of <code>operator+</code> requires only that the type is addable in some way. Thanks to guaranteed copy elision, we can implement it on most types in such a way that we do not even require a move constructor. An implementation of <code>operator+=</code> requires that the type is both addable and assignable. We should make the operations with the broadest applicability our basis.</p>
 
-<p>Let’s look a little closer at our <code>operator+=</code> implementation that is based on <code>operator+</code> and see if we can lift the concepts used to make the operation more generic. For strings, we wrote this:</p>
+<p>Let's look a little closer at our <code>operator+=</code> implementation that is based on <code>operator+</code> and see if we can lift the concepts used to make the operation more generic. For strings, we wrote this:</p>
 
 <pre><code>template&lt;typename String&gt; requires std::is_same&lt;std::decay_t&lt;String&gt;, string&gt;{}
 string &amp; operator+=(string &amp; lhs, String &amp;&amp; rhs) {
