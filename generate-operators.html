@@ -1,0 +1,368 @@
+<h1 id="automatically-generate-more-operators">Automatically Generate More Operators</h1>
+
+
+<h2 id="summary">Summary</h2>
+
+<p>Follow the lead of <code>operator&lt;=&gt;</code> by generating rewrite rules if a particular operator does not exist in current code. Rewrite <code>lhs += rhs</code> as (approximately) <code>lhs = lhs + rhs</code> (and similar for other arithmetic). Rewrite <code>++x</code> as <code>x += 1</code>. Rewrite <code>x++</code> as <code>++x</code> but return the original value. Rewrite <code>lhs-&gt;rhs</code> as <code>(*lhs).rhs</code>.</p>
+
+
+
+<h2 id="tony-table">Tony Table</h2>
+
+<table>
+<tr>
+	<th>Old</th>
+	<th>New</th>
+</tr>
+<tr>
+<td valign="top">
+<pre><code>template&lt;typename T&gt;
+struct iterator {
+    // typedefs;
+    // constructors
+
+    reference operator*() const noexcept {
+        assert(m_it != nullptr);
+        return *m_it;
+    }
+    auto operator-&gt;() const noexcept {
+        return std::addressof(operator*());
+    }
+
+    friend auto operator+(iterator const lhs, difference_type const rhs) {
+        return iterator(lhs.m_it + rhs);
+    }
+    friend difference_type operator-(iterator const lhs, iterator const rhs) {
+        return lhs.m_it - rhs.m_it;
+    }
+
+    reference operator[](difference_type const index) const {
+        return *(*this + index);
+    }
+
+    auto operator&lt;=&gt;(iterator const other) = default;
+
+private:
+    T * m_it;
+};
+
+template&lt;typename T&gt;
+auto operator+(iterator&lt;T&gt;::difference_type const lhs, iterator&lt;T&gt; const rhs) {
+    return rhs + lhs;
+}
+
+template&lt;typename T&gt;
+auto operator-(iterator&lt;T&gt; const lhs, iterator&lt;T&gt;::difference_type const rhs) {
+    return lhs + -rhs;
+}
+
+template&lt;typename T&gt;
+auto &amp; operator+=(iterator&lt;T&gt; &amp; lhs, iterator&lt;T&gt;::difference_type const rhs) {
+    return lhs = lhs + rhs;
+}
+template&lt;typename T&gt;
+auto &amp; operator-=(iterator&lt;T&gt; &amp; lhs, iterator&lt;T&gt;::difference_type const rhs) {
+    return lhs = lhs - rhs;
+}
+
+template&lt;typename T&gt;
+auto &amp; operator++(iterator&lt;T&gt; &amp; value) {
+    return value += 1;
+}
+template&lt;typename T&gt;
+auto operator++(iterator&lt;T&gt; &amp; value, int) {
+    auto temp = value;
+    ++value;
+    return temp;
+}
+
+template&lt;typename T&gt;
+auto &amp; operator--(iterator&lt;T&gt; &amp; value) {
+    return value -= 1;
+}
+template&lt;typename T&gt;
+auto operator--(iterator&lt;T&gt; &amp; value, int) {
+    auto temp = value;
+    --value;
+    return temp;
+}
+</code></pre>
+</td>
+
+<td valign="top">
+<pre><code>template&lt;typename T&gt;
+struct iterator {
+    // typedefs
+    // constructors
+
+    reference operator*() const noexcept {
+        assert(m_it != nullptr);
+        return *m_it;
+    }
+
+
+
+
+    friend auto operator+(iterator const lhs, difference_type const rhs) {
+        return iterator(lhs.m_it + rhs);
+    }
+    friend difference_type operator-(iterator const lhs, iterator const rhs) {
+        return lhs.m_it - rhs.m_it;
+    }
+
+    reference operator[](difference_type const index) const {
+        return *(*this + index);
+    }
+
+    auto operator&lt;=&gt;(iterator const other) = default;
+
+private:
+    T * m_it;
+};
+
+template&lt;typename T&gt;
+auto operator+(iterator&lt;T&gt;::difference_type const lhs, iterator&lt;T&gt; const rhs) {
+    return rhs + lhs;
+}
+
+template&lt;typename T&gt;
+auto operator-(iterator&lt;T&gt; const lhs, iterator&lt;T&gt;::difference_type const rhs) {
+    return lhs + -rhs;
+}
+</code></pre>
+</td>
+</tr>
+</table>
+
+
+<h2 id="arithmetic-bitwise-and-compound-assignment-operators">Arithmetic, Bitwise, and Compound Assignment Operators</h2>
+
+<p>For all binary arithmetic and bitwise operators, there are corresponding compound assignment operators. There are two obvious ways to implement these pairs of operators without code duplication: implement <code>a += b</code> in terms of <code>a = a + b</code> or implement <code>a = a + b</code> in terms of <code>a += b</code>. Using the compound assignment operator as the basis has a tradition going back to C++98, so let’s consider what that code looks like using <code>string</code> as our example:</p>
+
+<pre><code>string &amp; operator+=(string &amp; lhs, string const &amp; rhs) {
+    lhs.insert(end(lhs), begin(rhs), end(rhs));
+    return lhs;
+}
+string &amp; operator+=(string &amp; lhs, string &amp;&amp; rhs) {
+    if (lhs.capacity() &gt;= lhs.size() + rhs.size()) {
+        return lhs += std::as_const(rhs);
+    } else {
+        rhs.insert(begin(rhs), begin(lhs), end(lhs));
+        lhs = std::move(rhs);
+        return lhs;
+    }
+}
+
+string operator+(string const &amp; lhs, string const &amp; rhs) {
+    string result;
+    result.reserve(lhs.size() + rhs.size());
+    result = lhs;
+    result += rhs;
+    return result;
+}
+string operator+(string const &amp; lhs, string &amp;&amp; rhs) {
+    rhs.insert(begin(rhs), begin(lhs), end(lhs));
+    return std::move(rhs);
+}
+template&lt;typename String&gt; requires std::is_same&lt;std::decay_t&lt;String&gt;, string&gt;{}
+string operator+(string &amp;&amp; lhs, String &amp;&amp; rhs) {
+    lhs += std::forward&lt;String&gt;(rhs);
+    return std::move(lhs);
+}
+</code></pre>
+
+<p>This does not seem to save us as much as we might like. We can have a single overload of <code>string + string</code> when we take an rvalue for the right-hand side argument, but when we have an lvalue as our left-hand side we need to write two more overloads (one of which cannot even use <code>operator+=</code>). It may seem tempting at first to take that approach, but taking advantage of move semantics eliminates most code savings.</p>
+
+<p>What happens if we try to use <code>operator+</code> as the basis for our operations? The initial reason that C++03 code typically defined its operators in terms of <code>operator+=</code> was for efficiency, but with the addition of move semantics to C++11, we can regain this efficiency. What does the ideal <code>string + string</code> implementation look like?</p>
+
+<pre><code>string operator+(string const &amp; lhs, string const &amp; rhs) {
+    string result;
+    result.reserve(lhs.size() + rhs.size());
+    result = lhs;
+    result.insert(end(target), begin(rhs), end(rhs));
+    return result;
+}
+string operator+(string &amp;&amp; lhs, string const &amp; rhs) {
+    lhs.insert(end(lhs), begin(rhs), end(rhs));
+    return std::move(lhs);
+}
+string operator+(string const &amp; lhs, string &amp;&amp; rhs) {
+    rhs.insert(begin(rhs), begin(lhs), end(lhs));
+    return std::move(rhs);
+}
+string operator+(string &amp;&amp; lhs, string &amp;&amp; rhs) {
+    return (lhs.size() + rhs.size() &lt;= lhs.capacity()) ?
+        std::move(lhs) + detail::add_const(rhs) :
+        std::as_const(lhs) + std::move(rhs);
+}
+
+template&lt;typename String&gt; requires std::is_same&lt;std::decay_t&lt;String&gt;, string&gt;{}
+string &amp; operator+=(string &amp; lhs, String &amp;&amp; rhs) {
+    lhs = std::move(lhs) + std::forward&lt;String&gt;(rhs);
+    return lhs;
+}
+</code></pre>
+
+<p>This mirrors the implementation if <code>operator+=</code> is the basis operation: we still end up with five functions in our interface. One interesting thing of note here is that the <code>operator+=</code> implementation does not know anything about its types other than that they are addable and assignable. Compare that with the <code>operator+</code> implementations from the first piece of code where they need to know about sizes, reserving, and insertion because <code>operator+=</code> alone is not powerful enough. There are several more counterexamples that argue against <code>operator+=</code> being our basis operation, but most come down to the same fact: <code>operator+</code> does not treat either argument specially, but <code>operator+=</code> does.</p>
+
+<p>The first counterexample is <code>std::string</code> (again). We can perform <code>string += string_view</code>, but not <code>string_view += string</code>. If we try to define <code>operator+</code> in terms of <code>operator+=</code>, that would imply that we would be able to write <code>string + string_view</code>, but not <code>string_view + string</code>, which seems like an odd restriction.</p>
+
+<p>The second counterexample is the bounded::integer library. This library allows users to specify compile-time bounds on an integer type, and the result of arithmetic operations reflects the new bounds based on that operation. For instance, <code>bounded::integer&lt;0, 10&gt; + bounded::integer&lt;1, 9&gt; == bounded::integer&lt;1, 19&gt;</code>. If <code>operator+=</code> is the basis, it requires that the return type of an operation is the same as the type of the left-hand side of that operation.</p>
+
+<p>The third counterexample is all types that are not assignable (for instance, if they contain a const data member). This restriction makes sense conceptually. An implementation of <code>operator+</code> requires only that the type is addable in some way. Thanks to guaranteed copy elision, we can implement it on most types in such a way that we do not even require a move constructor. An implementation of <code>operator+=</code> requires that the type is both addable and assignable. We should make the operations with the broadest applicability our basis.</p>
+
+<p>Let’s look a little closer at our <code>operator+=</code> implementation that is based on <code>operator+</code> and see if we can lift the concepts used to make the operation more generic. For strings, we wrote this:</p>
+
+<pre><code>template&lt;typename String&gt; requires std::is_same&lt;std::decay_t&lt;String&gt;, string&gt;{}
+string &amp; operator+=(string &amp; lhs, String &amp;&amp; rhs) {
+    lhs = std::move(lhs) + std::forward&lt;String&gt;(rhs);
+    return lhs;
+}
+</code></pre>
+
+<p>The first obvious improvement is that the types should not be restricted to be the same type. Users expect that if <code>string = string + string_view</code> compiles, so does <code>string += string_view</code>. We are also not using anything string specific in this implementation, and our goal is to come up with a single <code>operator+=</code> that works for all types. With pseudo-requirements, we end up with:</p>
+
+<pre><code>template&lt;typename LHS, typename RHS&gt; requires Addable and Assignable
+LHS &amp; operator+=(LHS &amp; lhs, RHS &amp;&amp; rhs) {
+    lhs = std::move(lhs) + std::forward&lt;RHS&gt;(rhs);
+    return lhs;
+}
+</code></pre>
+
+<p>Are there any improvements we can make to this signature? One possible problem is that we unconditionally return a reference to the lhs, regardless of the behavior of the assignment operator. This is what is commonly done, but there are some use cases for not doing so. With <code>volatile</code> qualifiers, implementations diverge in whether returning a reference to an object qualifies as a read from <code>volatile</code>, and thus also diverge in behavior of warnings from ignoring a volatile-qualified result. This means that types which want to support volatile often return <code>void</code> from their assignment operator. A more compelling example might be <code>std::atomic</code>, which returns <code>T</code> instead of <code>atomic&lt;T&gt;</code> in <code>atomic&lt;T&gt; = T</code>, and this behavior is reflected in the current compound assignment operators. An improvement to our previous signature, therefore, is the following implementation:</p>
+
+<pre><code>template&lt;typename LHS, typename RHS&gt; requires Addable and Assignable
+decltype(auto) operator+=(LHS &amp; lhs, RHS &amp;&amp; rhs) {
+    return lhs = std::move(lhs) + std::forward&lt;RHS&gt;(rhs);
+}
+</code></pre>
+
+<p>Now our compound assignment operator returns whatever the assignment operator returns. We have a technical reason to make this change, but does it match up with our expectations? Conceptually, <code>operator+=</code> should perform an addition followed by an assignment, so it seems reasonable to return whatever assignment returns, and this mirrors the (only?) type in the standard library that returns something other than <code>*this</code> from its assignment operator.</p>
+
+<p>One final question might be about that somewhat strange looking <code>std::move(lhs)</code> piece. You might wonder whether this is correct or safe, since it appears to lead to a self-move. Current guidance from people such as Eric Niebler and Howard Hinnant is that self-move should be legal, but that such an expression does not necessarily leave the object in any paricular state. Fortunately, we sidestep this problem entirely becaise there is actually no self-move occuring here. <code>operator+</code> accepts its argument by rvalue-reference, but that function then returns by value. This means that the object assigned to <code>lhs</code> is a completely separate object, and there are no aliasing concerns.</p>
+
+
+
+<h3 id="recommendation">Recommendation</h3>
+
+<p>We should “generate” compound all assignment operators following the same rules as we follow for <code>operator&lt;=&gt;</code>: if an expression contains a call to a compound assignment operator and there is no such user-declared operator, the expression is instead rewritten to be the decomposed version: <code>lhs @= rhs</code> becomes <code>lhs = std::move(lhs) @ rhs</code>. Users can opt-in to using such an operator rewrite (rather than using it only as a fallback) by specifying <code>= default</code>. They can opt-out using <code>= delete</code>. This proposal would “generate” the following operators:</p>
+
+<ul>
+<li><code>operator+=</code></li>
+<li><code>operator-=</code></li>
+<li><code>operator*=</code></li>
+<li><code>operator/=</code></li>
+<li><code>operator%=</code></li>
+<li><code>operator&amp;=</code></li>
+<li><code>operator|=</code></li>
+<li><code>operator^=</code></li>
+<li><code>operator&lt;&lt;=</code></li>
+<li><code>operator&gt;&gt;=</code></li>
+</ul>
+
+
+
+<h2 id="prefix-increment-and-decrement">Prefix Increment and Decrement</h2>
+
+
+
+<h3 id="recommendation-1">Recommendation</h3>
+
+<p>Rewrite <code>++a</code> as <code>a += 1</code>, and rewrite <code>--a</code> as <code>a -= 1</code>. This will even match the current behavior for <code>std::atomic</code>.</p>
+
+
+
+<h2 id="postfix-increment-and-decrement">Postfix Increment and Decrement</h2>
+
+
+
+<h3 id="recomendation">Recomendation</h3>
+
+<p>Rewrite <code>a++</code> as something like the statement expression <code>({ auto __temp = a; ++a; __temp; })</code> and rewite <code>a--</code> as something like the statement expression <code>({ auto __temp = a; --a; __temp; })</code>. This will work for most normal types, but fails to compile for <code>std::atomic</code> because <code>std::atomic</code> is non-copyable. This is fine, because <code>std::atomic</code> would need to provide different functionality by returning a copy of the original <code>T</code>, rather than a copy of the original <code>std::atomic&lt;T&gt;</code>.</p>
+
+
+
+<h2 id="member-of-pointer">Member of pointer (<code>-&gt;</code>)</h2>
+
+<p>There appear to be a few design decisions to make for this operator: how do we get the address of the object, and how do we handle temporaries. We will discuss some possible approaches, and hopefully come up with a solution that avoids their drawbacks.</p>
+
+<p>First, there are two ways to get the address:</p>
+
+<pre><code>auto operator-&gt;() const {
+    return std::addressof(operator*());
+}
+</code></pre>
+
+<p>or</p>
+
+<pre><code>auto operator-&gt;() const {
+    return &amp;(operator*());
+}
+</code></pre>
+
+<p>The first version guarantees that we always return the address of the object returned by <code>operator*</code>, so <code>operator-&gt;</code> will likely have the behavior expected by the caller. The second version assumes that if unary <code>operator&amp;</code> was overloaded, it must have been for some reason and the returned type must be doing something important, so it has the behavior likely expected by the writer of the type returned by <code>operator*</code>. The general existing practice in generic code is to always use the “true” address by calling <code>addressof</code>, and the general recommendation in broader C++ is to not overload unary <code>operator&amp;</code>.</p>
+
+<p>Second, do we attempt to make types which return a temporary from <code>operator*</code> work, using something like</p>
+
+<pre><code>struct temporary_operator_arrow {
+    using value_type = std::remove_reference_t&lt;decltype(operator*())&gt;;
+    explicit temporary_operator_arrow(value_type value):
+        m_value(std::move(value))
+    {
+    }
+    auto operator-&gt;() &amp;&amp; {
+        return std::addressof(m_value);
+    }
+
+private:
+    value_type m_value;
+};
+
+auto operator-&gt;() const {
+    if constexpr (returns temporary) {
+        return temporary_operator_arrow(operator*());
+    } else {
+        return std::addressof(operator*());
+    }
+}
+</code></pre>
+
+<p>Doing this indirection layer has the advantage that code like <code>f(it-&gt;x)</code> would just work, even if <code>*it</code> returns by value (as long as <code>*it</code> is movable). The downside of this approach is that it silently breaks user expectations around lifetime extension with references. In other words, if <code>*it</code> returns a temporary, the following code compiles and uses an object after its lifetime has ended:</p>
+
+<pre><code>auto &amp;&amp; ref = it-&gt;x;
+f(ref);
+</code></pre>
+
+<p>These would be the possible approaches if we were to design a library-only solution. However, this paper traffics in rewrite rules (following the lead of <code>operator&lt;=&gt;</code>), not in terms of function calls. Because of this, we have one more option: we could define <code>lhs-&gt;rhs</code> as being equivalent to <code>(*lhs).rhs</code> (assuming lhs does not have an <code>operator-&gt;</code> defined). This neatly sidesteps all of the previous discussion by simply making the questions unnatural to ask, with the results implied by existing language rules. It even plays nicely with existing rules around lifetime extension of temporaries.</p>
+
+
+
+<h3 id="recommendation-2">Recommendation</h3>
+
+<p>Rewrite <code>lhs-&gt;rhs</code> as <code>(*lhs).rhs</code>.</p>
+
+
+
+<h2 id="subscript">Subscript (<code>[]</code>)</h2>
+
+<p>The subscript operator is a bit trickier. The problem here is that there are actually at least three different subscript operators with the same syntax. The first subscript operator is the subscript operator of iterators: <code>it[n]</code> is equivalent to <code>*(it + n)</code>. The second subscript operator is the subscript operator of random-access ranges: <code>range[n]</code> is equivalent to <code>begin(range)[n]</code>. The third subscript operator is lookup into an associative container: <code>dictionary[key]</code> is equivalent to <code>*dictionary.emplace(key).first</code>. This gets even more complicated when you consider that a type can model both a random-access range and an associative container (for instance: <code>flat_map</code>).</p>
+
+
+
+<h3 id="recommendation-3">Recommendation</h3>
+
+<p>Do nothing.</p>
+
+
+
+<h2 id="operator"><code>operator-</code></h2>
+
+<p><code>a - b</code> is theoretically equivalent to <code>a + -b</code>. This is true in C++ only for types which accurately model their mathematical equivalents or else maintain a modular equivalence (for instance, unsigned types). The problem is that the expression <code>-b</code> might overflow. Even if that negation is well defined, there still may be overflow; consider <code>ptr - 1U</code>: we rewrote that to be <code>ptr + -1U</code>, the pointer arithmetic would overflow.</p>
+
+<p>How about the other way around? Perhaps we could define <code>-a</code> as <code>0 - a</code>? This is a potentially promising avenue, which other potential authors are encouraged to consider. That exact definition would need some tweaking, as this would give pointers a unary minus operator with undefined behavior for non-null pointers (<code>0</code> is also a null pointer constant, allowing the conversion, and pointer arithmetic is undefined for out-of-bounds arithmetic, but this is a solvable problem).</p>
+
+
+
+<h3 id="recommendation-4">Recommendation</h3>
+
+<p>Do nothing.</p>
