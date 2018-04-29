@@ -21,6 +21,22 @@ This paper has three primary design goals:
 2) Allow library authors to take advantage of known-at-compile-time values to improve the performance of their libraries
 3) Allow library authors to take advantage of known-at-compile-time values to improve the diagnostics of their libraries
 
+## No Shadow Worlds
+
+Malte Skarupke wrote an article on [language design and "shadow worlds"](https://probablydance.com/2015/02/16/ideas-for-a-programming-language-part-3-no-shadow-worlds/). Shadow worlds are parts of a language which are segregated from the rest of the language. When you are stuck in this "shadow" language, you find yourself wanting to use the full power of the "real" language. C++ contains at least four general purpose languages (three of them shadow languages): "regular" C++, `constexpr` functions, templates, and macros.
+
+Prior to C++14, constexpr functions couldn't have `if` or `for`, leading to contorted recursive code full of `return conditon ? complicated_expression1 : complicated_expression2`. Since C++14, we cannot allocate memory in constexpr functions. Once we remove that restriction in C++20, we still cannot `reinterpret_cast`. The trend here is an ever increasing move toward making `constexpr` functions just be regular functions.
+
+Templates are in an even worse spot: another Turing complete language that has no loops, no mutation, and a completely different syntax for everything.
+
+Worse still are macros: no loops, mutation, [recursion](https://stackoverflow.com/a/10526117/852254), scoping, no real functions, and weird if statements.
+
+For this paper, the shadow world of templates is the most relevant. In a strong twist of irony, the paper talks about macros being a shadow world in every language, so therefore you want a strong template system that can replace macros. The template system, however, is yet another shadow language. In C++, as in other languages, the compile-time arguments are split from the run-time: we have template parameters and function parameters, so you can write f<0>(1). That seems fine, at first, until you realize that there are many things you cannot do because of that syntactic difference.
+
+You cannot pass template arguments to constructors. You cannot pass template arguments to overloaded operators. You cannot overload on whether a value is known at compile time when they have different syntaxes. You cannot put a compile-time argument after a run-time argument, even if that is where it makes the most sense for it to be. You cannot generically forward a pack of arguments, some of them compile time and some of them run time. All of these limitations lead to us reimplementing basic functionality like loops, partial function application, and sorting for "run time" vs "compile time" values.
+
+These problems motivate this paper. By treating compile-time and run-time values more uniformly, we bring these two worlds together. Large portions of existing metaprogramming libraries going back to Boost.MPL try to work around the problems, but we need a language change to solve it at the root.
+
 ## Before and After
 
 <style type="text/css">table {
