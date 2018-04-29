@@ -15,6 +15,12 @@ With this proposal, the following code would be valid:
 
 The parameter is usable in all the same ways as any `constexpr` variable.
 
+This paper has three primary design goals:
+
+1) Eliminate arcane metaprogramming from modern libraries by allowing them to make use of "regular" programming.
+2) Allow library authors to take advantage of known-at-compile-time values to improve the performance of their libraries
+3) Allow library authors to take advantage of known-at-compile-time values to improve the diagnostics of their libraries
+
 ## Before and After
 
 <style type="text/css">table {
