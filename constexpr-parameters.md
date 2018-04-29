@@ -109,15 +109,10 @@ t[2] = 3; // compile failure</code></pre>
     </tr>
     <tr>
         <td>
-            <pre><code>std::integral_constant&lt;int, 13&gt;{}</code></pre>
-        </td>
-        <td>
-            <pre><code>13</code></pre>
-        </td>
-    </tr>
-    <tr>
-        <td>
-            <pre><code>std::constant&lt;int, 24&gt;    // proposed</code></pre>
+<pre><code>std::integral_constant&lt;int, 24&gt;{}
+std::constant&lt;int, 24&gt;    // proposed
+boost::hana::int_c&lt;24&gt;
+boost::mpl::int_&lt;24&gt;</code></pre>
         </td>
         <td>
             <pre><code>24</code></pre>
@@ -125,16 +120,8 @@ t[2] = 3; // compile failure</code></pre>
     </tr>
     <tr>
         <td>
-            <pre><code>f(boost::hana::int_c&lt;10&gt;);</code></pre>
-        </td>
-        <td>
-            <pre><code>f(10);</code></pre>
-        </td>
-    </tr>
-    <tr>
-        <td>
 <pre><code>template&lt;int n&gt;
-void f(boost::mpl::int_&lt;n&gt;);</code></pre>
+void f(boost::hana::int_&lt;n&gt;);</code></pre>
         </td>
         <td>
 <pre><code>&nbsp;
