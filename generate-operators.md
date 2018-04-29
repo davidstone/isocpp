@@ -7,7 +7,7 @@ Audience: Evolution Working Group (EWG)
 
 ## Summary
 
-This proposal follows the lead of `operator<=>` by generating rewrite rules if a particular operator does not exist in current code.
+This proposal follows the lead of `operator<=>` (see [Consistent Comparison](http://open-std.org/JTC1/SC22/WG21/docs/papers/2017/p0515r3.pdf)) by generating rewrite rules if a particular operator does not exist in current code.
 
 * Rewrite `lhs += rhs` as `lhs = std::move(lhs) + rhs`
 * Rewrite `lhs -= rhs` as `lhs = std::move(lhs) - rhs`
