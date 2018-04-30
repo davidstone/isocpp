@@ -15,6 +15,10 @@ With this proposal, the following code would be valid:
 
 The parameter is usable in all the same ways as any `constexpr` variable.
 
+Moreover, this paper proposes the introduction of a "maybe constexpr" qualifier, with a proposed syntax of `constexpr?` (this syntax should be seen as a placeholder if a better syntax is suggested). Such a function can accept values that are or are not `constexpr` and maintain that status when passed on to another function. In other words, this is a way to deduce and forward `constexpr`, similar to what "forwarding references" / "universal references" (`T &&`) do in function templates today. This paper proposes adding generally usable functionality to test whether an expression is a constant expression (`is_constexpr`), with the primary use case being to use this test in an `if constexpr` branch in such a function to add in a compile-time-only check.
+
+Finally, this paper proposes allowing overloading on `constexpr` parameters. Whether a parameter is `constexpr` would be used as the final step in function overload resolution to resolve cases that would otherwise be ambiguous. Put another way, we first perform overload resolution on type, then on `constexpr`.
+
 This paper has three primary design goals:
 
 1) Eliminate arcane metaprogramming from modern libraries by allowing them to make use of "regular" programming.
