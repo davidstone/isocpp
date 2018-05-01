@@ -255,7 +255,7 @@ This proposal will reference a few libraries that make heavy use of compile-time
 
 ### Class Types in Non-Type Template Parameters
 
-[P0732R1](http://www.open-std.org/jtc1/sc22/wg21/docs/papers/2018/p0732r1.pdf): current proposal making its way through the committee. From the paper: "We should allow non-union class types to appear in non-type template parameters. Require that types used as such, and all of their bases and non-static data members recursively, have a non-user-provided `operator<=>` returning a type that is implicitly convertible to std::strong_equality, and contain no references." This paper will refer to such types as having a "trivial `operator<=>`.
+[P0732R1](http://www.open-std.org/jtc1/sc22/wg21/docs/papers/2018/p0732r1.pdf): current proposal making its way through the committee. From the paper: "We should allow non-union class types to appear in non-type template parameters. Require that types used as such, and all of their bases and non-static data members recursively, have a non-user-provided `operator<=>` returning a type that is implicitly convertible to std::strong_equality, and contain no references." This paper will refer to such types as having a "trivial `operator<=>`".
 
 ## Why we need this proposal
 
