@@ -245,13 +245,17 @@ void f(int something, char y) {
 
 This proposal will reference a few libraries that make heavy use of compile-time parameters. If readers are not familiar with these libraries, that is fine, the below should be sufficient description to understand some of the motivation of this paper. This paper will also reference other papers that are currently under discussion.
 
+### boost::mpl
+
+The [Boost.MPL](https://www.boost.org/doc/libs/1_67_0/libs/mpl/doc/index.html) library is a general-purpose template metaprogramming framework of compile-time algorithms, sequences and metafunctions. It was designed in the constraints of C++03 and organizes itself around passing types to class template parameters.
+
 ### boost::hana
 
-`boost::hana` is a metaprogramming library that aims to make metaprogramming just "programming", using as much "regular" C++ as possible. It does this by merging types and values -- values are encoded in types, and types are turned into values -- so that most of the user interaction with `boost::hana` is by calling what appear to be regular functions.
+[Boost.Hana](https://www.boost.org/doc/libs/1_67_0/libs/hana/doc/html/index.html) is a metaprogramming library that aims to make metaprogramming just "programming", using as much "regular" C++ as possible. It does this by merging types and values -- values are encoded in types, and types are turned into values -- so that most of the user interaction with `boost::hana` is by calling what appear to be regular functions.
 
 ### bounded::integer
 
-`bounded::integer` is a library that adds compile-time range checking to integer types. `bounded::integer<5, 1000>` is an integer type that can be between 5 and 1000, inclusive, and the resulting type of `bounded::integer<1, 10> + bounded::integer<2, 5>` is `bounded::integer<3, 15>`.
+[`bounded::integer`](https://bitbucket.org/davidstone/bounded_integer) is a library that adds compile-time range checking to integer types. `bounded::integer<5, 1000>` is an integer type that can be between 5 and 1000, inclusive, and the resulting type of `bounded::integer<1, 10> + bounded::integer<2, 5>` is `bounded::integer<3, 15>`.
 
 ### Class Types in Non-Type Template Parameters
 
