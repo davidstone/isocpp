@@ -9,9 +9,9 @@ Audience: Evolution Working Group (EWG)
 
 With this proposal, the following code would be valid:
 
-    void f(constexpr int x) {
-        static_assert(x == 5);
-    }
+	void f(constexpr int x) {
+		static_assert(x == 5);
+	}
 
 The parameter is usable in all the same ways as any `constexpr` variable.
 
@@ -44,43 +44,43 @@ These problems motivate this paper. By treating compile-time and run-time values
 ## Before and After
 
 <style type="text/css">table {
-    padding: 0;
-    border-collapse: collapse;
+	padding: 0;
+	border-collapse: collapse;
 }
 table tr {
-    border-top: 1px solid #cccccc;
-    background-color: white;
-    margin: 0;
-    padding: 0;
+	border-top: 1px solid #cccccc;
+	background-color: white;
+	margin: 0;
+	padding: 0;
 }
 table tr:nth-child(2n) {
-    background-color: #f8f8f8;
+	background-color: #f8f8f8;
 }
 table tr th {
-    font-weight: bold;
-    border: 1px solid #cccccc;
-    margin: 0;
-    padding: 6px 13px;
+	font-weight: bold;
+	border: 1px solid #cccccc;
+	margin: 0;
+	padding: 6px 13px;
 }
 table tr td {
-    border: 1px solid #cccccc;
-    margin: 0;
-    padding: 6px 13px;
+	border: 1px solid #cccccc;
+	margin: 0;
+	padding: 6px 13px;
 }
 table tr th :first-child, table tr td :first-child {
-    margin-top: 0;
+	margin-top: 0;
 }
 table tr th :last-child, table tr td :last-child {
-    margin-bottom: 0;
+	margin-bottom: 0;
 }</style>
 
 <table>
-    <tr>
-        <th>Now (without this proposal)</th>
-        <th>The future (with this proposal)</th>
-    </tr>
-    <tr>
-        <td>
+	<tr>
+		<th>Now (without this proposal)</th>
+		<th>The future (with this proposal)</th>
+	</tr>
+	<tr>
+		<td>
 <pre><code>auto a = std::array&lt;int, 2&gt;{};
 a[0] = 1;
 a[1] = 5;
@@ -90,8 +90,8 @@ auto t = std::tuple&lt;int, std::string&gt;{};
 std::get&lt;0&gt;(t) = 1;
 std::get&lt;1&gt;(t) = "asdf";
 std::get&lt;2&gt;(t) = 3;  // compile error</code></pre>
-        </td>
-        <td>
+		</td>
+		<td>
 <pre><code>auto a = std::array&lt;int, 2&gt;{};
 a[0] = 1;
 a[1] = 5;
@@ -101,39 +101,39 @@ auto t = std::tuple&lt;int, std::string&gt;{};
 t[0] = 1;
 t[1] = "asdf";
 t[2] = 3; // compile failure</code></pre>
-        </td>
-    </tr>
-    <tr>
-        <td>
-            <pre><code>std::true_type{}</code></pre>
-        </td>
-        <td>
-            <pre><code>true</code></pre>
-        </td>
-    </tr>
-    <tr>
-        <td>
+		</td>
+	</tr>
+	<tr>
+		<td>
+			<pre><code>std::true_type{}</code></pre>
+		</td>
+		<td>
+			<pre><code>true</code></pre>
+		</td>
+	</tr>
+	<tr>
+		<td>
 <pre><code>std::integral_constant&lt;int, 24&gt;{}
-std::constant&lt;int, 24&gt;    // proposed
+std::constant&lt;int, 24&gt;   // proposed
 boost::hana::int_c&lt;24&gt;
 boost::mpl::int_&lt;24&gt;</code></pre>
-        </td>
-        <td>
-            <pre><code>24</code></pre>
-        </td>
-    </tr>
-    <tr>
-        <td>
+		</td>
+		<td>
+			<pre><code>24</code></pre>
+		</td>
+	</tr>
+	<tr>
+		<td>
 <pre><code>template&lt;int n&gt;
 void f(boost::hana::int_&lt;n&gt;);</code></pre>
-        </td>
-        <td>
+		</td>
+		<td>
 <pre><code>&nbsp;
 f(constexpr int x);</code></pre>
-        </td>
-    </tr>
-    <tr>
-        <td>
+		</td>
+	</tr>
+	<tr>
+		<td>
 <pre><code>0 &lt;=&gt; 1 == 0;
 // valid, as intended
 &nbsp;
@@ -141,18 +141,18 @@ f(constexpr int x);</code></pre>
 // valid, due to implementation detail
 &nbsp;
 </code></pre>
-        </td>
-        <td>
+		</td>
+		<td>
 <pre><code>0 &lt;=&gt; 1 == 0;
 // valid, as intended
 &nbsp;
 0 &lt;=&gt; 1 == nullptr;
 // error: no overloaded operator== comparing
 // strong_equality with nullptr_t</code></pre>
-        </td>
-    </tr>
-    <tr>
-        <td>
+		</td>
+	</tr>
+	<tr>
+		<td>
 <pre><code>// Either all regex constructions have an extra
 // pass over the input to determine the parsing
 // strategy, or...
@@ -160,8 +160,8 @@ auto const pathological = std::regex("(A+|B+)*C");
 // exponential time against failed matches
 // starting with 'A' and 'B'.
 // See https://swtch.com/~rsc/regexp/regexp1.html</code></pre>
-        </td>
-        <td>
+		</td>
+		<td>
 <pre><code>// Scan can be done at compile time, so...
 &nbsp;
 &nbsp;
@@ -170,75 +170,83 @@ auto const pathological = std::regex("(A+|B+)*C");
 // starting with 'A' and 'B'.
 &nbsp;
 </code></pre>
-        </td>
-    </tr>
-    <tr>
-        <td>
+		</td>
+	</tr>
+	<tr>
+		<td>
 <pre><code>auto const glob = std::regex("*");
 // throws std::regex_error
 &nbsp;
 </code></pre>
-        </td>
-        <td>
+		</td>
+		<td>
 <pre><code>auto const glob = std::regex("*");
 // static_assert failed "Regular expression token
 // '*' must occur after a character to repeat."</code></pre>
-        </td>
-    </tr>
-    <tr>
-        <td>
+		</td>
+	</tr>
+	<tr>
+		<td>
 <pre><code>// ???
 &nbsp;
 &nbsp;
 &nbsp;
 &nbsp;
 &nbsp;</code></pre>
-        </td>
-        <td>
+		</td>
+		<td>
 <pre><code>static_assert(pow(2_meters, 3) == 8_cubic_meters);
 meters runtime_value;
 std::cin &gt;&gt; runtime_value;
 if (pow(runtime_value, 2) &gt; 100_square_meters) {
-    throw std::exception{};
+	throw std::exception{};
 }</code></pre>
-        </td>
-    </tr>
-    <tr>
-        <td>
-            Do I want my code to work at compile time, do I want my code to be fast, or do I try to modify my compiler to recognize the code and generate the right assembly at run time when it write it in the `constexpr` style?
-        </td>
-        <td>
-<pre><code>// From the <a href="https://groups.google.com/a/isocpp.org/forum/#!topic/std-proposals/RdAK-0RyiY0">std-proposals forum</a>
-std::size_t strlen(constexpr char const * s) {
-    for (const char *p = s; ; ++p) {
-        if (*p == '\0') {
-            return static_cast&lt;std::size_t&gt;(p - s);
-        }
-    }
-}
-std::size_t strlen(char const * s) {
-    __asm__("SSE 4.2 insanity");
-}
-</code></pre>
-        </td>
+		</td>
 	</tr>
 	<tr>
-        <td>
-            Cannot write a function that transparently uses this intrinsic where possible. Cannot write a function that puts the parameters in the correct order without resorting to `integral_constant` business.
-        </td>
-        <td>
-            <pre><code>#include &lt;emmintrin.h&gt;
+		<td>
+<pre><code>// Do I want my code to work at compile time, do I
+// want my code to be fast, or do I try to modify
+// my compiler to recognize the code and generate
+// the right assembly at run time when it write it
+// in the `constexpr` style?</code></pre>
+		</td>
+		<td>
+<pre><code>// From the <a href="https://groups.google.com/a/isocpp.org/forum/#!topic/std-proposals/RdAK-0RyiY0">std-proposals forum</a>
+std::size_t strlen(constexpr char const * s) {
+	for (const char *p = s; ; ++p) {
+		if (*p == '\0') {
+			return static_cast&lt;std::size_t&gt;(p - s);
+		}
+	}
+}
+std::size_t strlen(char const * s) {
+	__asm__("SSE 4.2 insanity");
+}
+</code></pre>
+		</td>
+	</tr>
+	<tr>
+		<td>
+<pre><code>// Cannot write a function that transparently uses
+// this intrinsic where possible. Cannot write a
+// function that puts the parameters in the
+// correct order without resorting to
+// `integral_constant` business.</code></pre>
+		</td>
+		<td>
+			<pre><code>#include &lt;emmintrin.h&gt;
 &nbsp;
 void f(int something, char y) {
-    __m128i x;
-    // ...
-    // This intrinsic requires the second argument
+	__m128i x;
+	// ...
+	// This intrinsic requires the second argument
 	// to be a compile-time constant
-    x = __builtin_ia32_aeskeygenassist128(x, y);
-    // ...
+	x = __builtin_ia32_aeskeygenassist128(x, y);
+	// ...
 }</code></pre>
-        </td>
-    </tr>
+		</td>
+	</tr>
 </table>
 
 ## Background
