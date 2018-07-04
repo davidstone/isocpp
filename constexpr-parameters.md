@@ -426,8 +426,8 @@ Here we show a sample implementation of `is_constexpr`, defined as a macro, whic
 
 This must be a macro so that it does not evaluate the expression and perform side effects. We need to make it unevaluated, and the macro wraps that logic. I believe it shows the strength of this solution that users can use it to portably detect whether an expression is constexpr (a common user request for a feature), rather than needing that as a built-in language feature. If we had lazy function parameters, the implementation would be even more straightforward:
 
-constexpr bool is_constexpr(constexpr int) { return true; }
-constexpr bool is_constexpr(`LAZY` int) { return false; }
+	constexpr bool is_constexpr(constexpr int) { return true; }
+	constexpr bool is_constexpr(~LAZY~ int) { return false; }
 
 Regardless of how the feature is specified, it is an essential component of this proposal.
 
