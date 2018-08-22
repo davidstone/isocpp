@@ -144,6 +144,20 @@ These types are not comparable now. This paper does not propose adding any new c
 * `enable_shared_from_this`: It would be nice to give it a `strong_ordering` to allow derived classes to `= default`. However, this means that all classes that do not explicitly delete their comparison operator get an `operator<=>` that compares only the `enable_shared_from_this` base class, which is almost certainly wrong. Since this is intended to be used as a base class, we should not add `operator<=>` to it. Moreover, classes which `enable_shared_from_this` are unlikely to be basic value classes so they do not lose much by not being able to default.
 * `initializer_list`: `initializer_list` is a reference type. It would be strange to give it reference semantics on copy but value semantics for comparison. It would also be surprising if two `initializer_list` containing the same set of values compared as not equal. Therefore, I recommend not defining it for this type.
 
+### Types from C that are not proposed to get `operator<=>` in this paper
+
+* `div_t`
+* `ldiv_t`
+* `lldiv_t`
+* `imaxdiv_t`
+* `timespec`
+* `tm`
+* `lconv`
+* `fenv_t`
+* `fpos_t`
+* `mbstate_t`
+
+
 ## Types that will get their `operator<=>` from a conversion operator
 
 These types will get `operator<=>` if possible without any changes, just like they already have whatever comparison operators their underlying type has.
