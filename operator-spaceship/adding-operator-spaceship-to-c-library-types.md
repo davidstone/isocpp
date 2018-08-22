@@ -1,4 +1,4 @@
-# Types from C that should get operator<=>
+# Types from C that should get `operator<=>`
 
 <pre>
 Document Number: DXXXXR0
