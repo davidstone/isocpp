@@ -158,17 +158,6 @@ These types are not comparable now. This paper does not propose adding any new c
 * `mbstate_t`
 
 
-## Types that will get their `operator<=>` from a conversion operator
-
-These types will get `operator<=>` if possible without any changes, just like they already have whatever comparison operators their underlying type has.
-
-* `integral_constant` and all types deriving from `integral_constant` (has `operator T`)
-* `bitset::reference` (has `operator bool`)
-* `reference_wrapper` (has `operator T &`)
-* `atomic` (has `operator T`)
-
-This has the disadvantage that types which have a template comparison operator will not have their wrapper convertible. For instance, `std::reference_wrapper<std::string>` is not currently comparable. This does not affect `bitset::reference`, as it has a fixed conversion to `bool`, but it does affect the other three.
-
 ## Types that should get `operator<=>`, no change from current comparisons
 
 These types are all currently comparable. The only somewhat tricky decisions are in deciding whether to use a strong or weak comparison category.
@@ -266,6 +255,17 @@ These types are all currently comparable. The only somewhat tricky decisions are
 * `unordered_multimap::iterator`: `strong_equality`
 * `unodered_multiset::iterator`: `strong_equality`
 * `valarray::iterator`: `strong_ordering`
+
+## Types that will get their `operator<=>` from a conversion operator
+
+These types will get `operator<=>` if possible without any changes, just like they already have whatever comparison operators their underlying type has.
+
+* `integral_constant` and all types deriving from `integral_constant` (has `operator T`)
+* `bitset::reference` (has `operator bool`)
+* `reference_wrapper` (has `operator T &`)
+* `atomic` (has `operator T`)
+
+This has the disadvantage that types which have a template comparison operator will not have their wrapper convertible. For instance, `std::reference_wrapper<std::string>` is not currently comparable. This does not affect `bitset::reference`, as it has a fixed conversion to `bool`, but it does affect the other three.
 
 ## Types that wrap another type
 
