@@ -167,6 +167,8 @@ These types will get `operator<=>` if possible without any changes, just like th
 * `reference_wrapper` (has `operator T &`)
 * `atomic` (has `operator T`)
 
+This has the disadvantage that types which have a template comparison operator will not have their wrapper convertible. For instance, `std::reference_wrapper<std::string>` is not currently comparable. This does not affect `bitset::reference`, as it has a fixed conversion to `bool`, but it does affect the other three.
+
 ## Types that should get `operator<=>`, no change from current comparisons
 
 These types are all currently comparable. The only somewhat tricky decisions are in deciding whether to use a strong or weak comparison category.
