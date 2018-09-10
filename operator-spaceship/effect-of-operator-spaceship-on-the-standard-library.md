@@ -6,7 +6,7 @@ Author: David Stone (&#x64;&#x61;&#x76;&#x69;&#x64;&#x6D;&#x73;&#x74;&#x6F;&#x6E
 Audience: LEWG, LWG
 </pre>
 
-This paper lists (what are expected to be) non-controversial changes to the C++ standard library in response to [P0768](https://wg21.link/P0768), which adds `operator<=>` to the language. This is expected to be non-controversial because it tries to match existing behavior as much as possible.
+This paper lists (what are expected to be) non-controversial changes to the C++ standard library in response to [P0515](https://wg21.link/P0515), which adds `operator<=>` to the language. This is expected to be non-controversial because it tries to match existing behavior as much as possible.
 
 My general algorithm to determine what operations to support are: If the type represents a value of some sort, it should at least be `weak_equality`. If the type has some sort of meaningful ordering, it should have `weak_ordering`. We should be cautious in giving polymorphic types `operator<=>` (but if they already have other comparison operators, then we might as well).
 
