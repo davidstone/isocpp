@@ -42,6 +42,7 @@ When we add `operator<=>` to wrapper types, what do we do when the wrappers are 
 
 Prior to `operator<=>`, how do you implement `operator==` for a `SequenceContainer`, such as `vector`? (note: this paper intentially inlines the call to algorithms like `equal` and `lexicographical_compare`, and names the functions something other than `operator==` to give them a name for discussion)
 
+	template<typename T>
 	bool equal1(vector<T> const & lhs, vector<T> const & rhs) {
 		if (lhs.size() != rhs.size()) {
 			return false;
@@ -61,6 +62,7 @@ Prior to `operator<=>`, how do you implement `operator==` for a `SequenceContain
 
 This ensures that two differently-sized containers will immediately return false. It performs a single comparison of a data member within the `vector`, then each iteration is performs a single iterator comparison. It is important to note that the early size check lets us avoid following the internal data pointer in the container and lets us avoid a loop / function call. If we try to implement this without having the size check (note that it is currently mandated that implementations perform this size check), we have two possible solutions:
 
+	template<typename T>
 	bool equal2(vector<T> const & lhs, vector<T> const & rhs) {
 		auto lhs_first = lhs.begin();
 		auto const lhs_last = lhs.end();
@@ -76,6 +78,7 @@ This ensures that two differently-sized containers will immediately return false
 		return lhs.size() == rhs.size();
 	}
 
+	template<typename T>
 	bool equal3(vector<T> const & lhs, vector<T> const & rhs) {
 		auto impl = [](vector<T> const & smaller, vector<T> const & larger) {
 			auto smaller_first = smaller.begin();
@@ -107,6 +110,7 @@ Neither of these two options are satisfying. They all have at least as much in f
 `operator<=>` for containers must support ordering containers if the contained type can be ordered. If we want to maintain current ordering (more on that later), `operator<=>` would look something one of these two solutions:
 
 	// Does something like `equal2` above
+	template<typename T>
 	auto compare2(vector<T> const & lhs, vector<T> const & rhs) {
 		auto lhs_first = lhs.begin();
 		auto const lhs_last = lhs.end();
@@ -123,6 +127,7 @@ Neither of these two options are satisfying. They all have at least as much in f
 	}
 
 	// Does something like `equal3` above
+	template<typename T>
 	auto compare3(vector<T> const & lhs, vector<T> const & rhs) {
 		auto impl = [](vector<T> const & smaller, vector<T> const & larger) {
 			auto smaller_first = smaller.begin();
@@ -239,6 +244,7 @@ The previous solutions accept that `operator<=>` is slower than `operator==` and
 
 What does an `operator<=>` that gives this ordering look like?
 
+	template<typename T>
 	auto compare1(vector<T> const & lhs, vector<T> const & rhs) {
 		if (auto const cmp = lhs.size() <=> rhs.size(); cmp != 0) {
 			return cmp;
