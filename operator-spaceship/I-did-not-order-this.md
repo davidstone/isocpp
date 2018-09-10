@@ -73,7 +73,7 @@ This ensures that two differently-sized containers will immediately return false
 			++lhs_first;
 			++rhs_first;
 		}
-		return lhs_first == lhs_last && rhs_first == rhs_last;
+		return lhs.size() == rhs.size();
 	}
 
 	bool equal3(vector<T> const & lhs, vector<T> const & rhs) {
@@ -119,10 +119,7 @@ Neither of these two options are satisfying. They all have at least as much in f
 			++lhs_first;
 			++rhs_first;
 		}
-		return
-			rhs_first < rhs_last ? strong_ordering::greater :
-			lhs_first < lhs_last ? strong_ordering::less :
-			strong_ordering_equal;
+		return lhs.size() <=> rhs.size();
 	}
 
 	// Does something like `equal3` above
