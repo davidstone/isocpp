@@ -143,8 +143,7 @@ Neither of these two options are satisfying. They all have at least as much in f
 			return larger_first == larger.end() ? strong_ordering::equal : strong_ordering::less;
 		};
 		auto reverse_ordering = [](auto order) {
-			// Turn less into greater and greater into less, but do nothing to
-			// equal, nonequal, equivalent, and nonequivalent
+			return 0 <=> order;
 		};
 
 		return lhs.size() <= rhs.size() ? impl(lhs, rhs) : reverse_ordering(impl(rhs, lhs));
