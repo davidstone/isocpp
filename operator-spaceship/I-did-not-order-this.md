@@ -8,7 +8,7 @@ Audience: LEWG, EWG
 
 ## Purpose
 
-There are many types in the standard library that have comparison operators that defer to the comparison operators of some template parameter (for instance, `vector`, `tuple`, and `variant`, henceforth "wrappers"). This paper explores the issues surrounding `operator<=>` for such wrappers. In particular, for some types, there is an important reason to define `operator==` and `operator!=` even in a world with `operator<=>`: it is sometimes cheaper to determine that two values are not equal than it is to determine in which way they are unequal. The canonical example here is differently-sized containers. Comparing their sizes is cheap (single integer comparison that does not need to follow a pointer), but comparing a value could be arbitrarily expensive. The current behavior of containers like `std::vector` is that no comparisons are performed on the contained objects if the sizes are not equal. It would be an unfortunate pessimization if `operator==` on a `vector<int>`, `vector<vector<int>>`, `tuple<vector<int>>`, or `struct { vector<int>; }` suddenly got slower in C++20. This paper explores several potential solutions to decide how to specify `operator<=>` for wrapper types.
+There are many types in the standard library that have comparison operators that defer to the comparison operators of some template parameter (for instance, `vector`, `tuple`, and `variant`, henceforth "wrappers"). This paper explores the issues surrounding `operator<=>` for such wrappers. In particular, for some types, there is an important reason to define `operator==` and `operator!=` even in a world with `operator<=>`: it is sometimes cheaper to determine that two values are not equal than it is to determine in which way they are unequal. The canonical example here is differently-sized containers. Comparing their sizes is cheap (single integer comparison that does not need to follow a pointer), but comparing a value could be arbitrarily expensive. The current behavior of containers like `vector` is that no comparisons are performed on the contained objects if the sizes are not equal. It would be an unfortunate pessimization if `operator==` on a `vector<int>`, `vector<vector<int>>`, `tuple<vector<int>>`, or `struct { vector<int>; }` suddenly got slower in C++20. This paper explores several potential solutions to decide how to specify `operator<=>` for wrapper types.
 
 ## Prior work
 
@@ -36,13 +36,13 @@ The obvious specifications for `operator<=>` on variable-sized containers is sig
 
 ### Backward compatibility
 
-When we add `operator<=>` to wrapper types, what do we do when the wrappers are given types that do not implement `operator<=>`? If we define the wrapper's `operator<=>` to call the wrapped type's `operator<=>`, we do not generate `operator<=>` for such a type, and if we unconditionally remove `operator==`, `operator!=`, `operator<`, `operator<=`, `operator>`, and `operator>=` from the wrapper types, the wrappers suddenly become non-comparable when instantiated with such types. If we unconditionally use `std::compare_3way` to implement these types so that we fall back on `operator==` and `operator<` for the underlying type, we end up with a silent performance change that makes such types up to twice as expensive to compare.
+When we add `operator<=>` to wrapper types, what do we do when the wrappers are given types that do not implement `operator<=>`? If we define the wrapper's `operator<=>` to call the wrapped type's `operator<=>`, we do not generate `operator<=>` for such a type, and if we unconditionally remove `operator==`, `operator!=`, `operator<`, `operator<=`, `operator>`, and `operator>=` from the wrapper types, the wrappers suddenly become non-comparable when instantiated with such types. If we unconditionally use `compare_3way` to implement these types so that we fall back on `operator==` and `operator<` for the underlying type, we end up with a silent performance change that makes such types up to twice as expensive to compare.
 
 ## Background
 
-Prior to `operator<=>`, how do you implement `operator==` for a `SequenceContainer`, such as `std::vector`? (note: this paper intentially inlines the call to algorithms like `std::equal` and `std::lexicographical_compare`, and names the functions something other than `operator==` to give them a name for discussion)
+Prior to `operator<=>`, how do you implement `operator==` for a `SequenceContainer`, such as `vector`? (note: this paper intentially inlines the call to algorithms like `equal` and `lexicographical_compare`, and names the functions something other than `operator==` to give them a name for discussion)
 
-	bool equal1(std::vector<T> const & lhs, std::vector<T> const & rhs) {
+	bool equal1(vector<T> const & lhs, vector<T> const & rhs) {
 		if (lhs.size() != rhs.size()) {
 			return false;
 		}
@@ -61,7 +61,7 @@ Prior to `operator<=>`, how do you implement `operator==` for a `SequenceContain
 
 This ensures that two differently-sized containers will immediately return false. It performs a single comparison of a data member within the `vector`, then each iteration is performs a single iterator comparison. It is important to note that the early size check lets us avoid following the internal data pointer in the container and lets us avoid a loop / function call. If we try to implement this without having the size check (note that it is currently mandated that implementations perform this size check), we have two possible solutions:
 
-	bool equal2(std::vector<T> const & lhs, std::vector<T> const & rhs) {
+	bool equal2(vector<T> const & lhs, vector<T> const & rhs) {
 		auto lhs_first = lhs.begin();
 		auto const lhs_last = lhs.end();
 		auto rhs_first = rhs.begin();
@@ -76,8 +76,8 @@ This ensures that two differently-sized containers will immediately return false
 		return lhs_first == lhs_last && rhs_first == rhs_last;
 	}
 
-	bool equal3(std::vector<T> const & lhs, std::vector<T> const & rhs) {
-		auto impl = [](std::vector<T> const & smaller, std::vector<T> const & larger) {
+	bool equal3(vector<T> const & lhs, vector<T> const & rhs) {
+		auto impl = [](vector<T> const & smaller, vector<T> const & larger) {
 			auto smaller_first = smaller.begin();
 			auto const smaller_last = smaller.end();
 			auto larger_first = larger.begin();
@@ -96,7 +96,7 @@ This ensures that two differently-sized containers will immediately return false
 
 You can see the [generated code for these versions on Godbolt](https://godbolt.org/z/17lOir).
 
-`equal2` is the straightforward approach, which ignores the problem. It means that for each element in the smaller container, we have two iterator comparisons instead of just one. For the common case of `vector<Integer>` or `std::string`, this changes our per iteration cost from two increments and two compare + branch to two increments, one compare + branch, and one compare + compare + and + branch. Using a very rough estimation, this adds an extra two operations per loop.
+`equal2` is the straightforward approach, which ignores the problem. It means that for each element in the smaller container, we have two iterator comparisons instead of just one. For the common case of `vector<Integer>` or `string`, this changes our per iteration cost from two increments and two compare + branch to two increments, one compare + branch, and one compare + compare + and + branch. Using a very rough estimation, this adds an extra two operations per loop.
 
 `equal3` tries to be smarter. It is optimized for longer sequences, because it pays a small fixed cost for the whole comparison to keep the loop costs the same as the first version. Something much like this is essentially what gcc's libstdc++ did for comparing `string` with `char const *`. Compared with `equal1`, this was benchmarked to dramatically increase the costs of comparisons (depending on the benchmark, anywhere from 0 to 66% of the total cost was removed when moving from something like `equal3` to something like `equal1`, but with `strlen` and `memcmp` mixed in).
 
@@ -107,38 +107,38 @@ Neither of these two options are satisfying. They all have at least as much in f
 `operator<=>` for containers must support ordering containers if the contained type can be ordered. If we want to maintain current ordering (more on that later), `operator<=>` would look something one of these two solutions:
 
 	// Does something like `equal2` above
-	auto compare2(std::vector<T> const & lhs, std::vector<T> const & rhs) -> decltype(std::declval<T>() <=> std::declval<T>()) {
+	auto compare2(vector<T> const & lhs, vector<T> const & rhs) {
 		auto lhs_first = lhs.begin();
 		auto const lhs_last = lhs.end();
 		auto rhs_first = rhs.begin();
 		auto const rhs_last = rhs.end();
 		while (lhs_first != lhs_last && rhs_first != rhs_last) {
-			if (auto const cmp = std::compare_3way(*lhs_first, *rhs_first); cmp != 0) {
+			if (auto const cmp = compare_3way(*lhs_first, *rhs_first); cmp != 0) {
 				return cmp;
 			}
 			++lhs_first;
 			++rhs_first;
 		}
 		return
-			rhs_first < rhs_last ? std::strong_ordering::greater :
-			lhs_first < lhs_last ? std::strong_ordering::less :
-			std::strong_ordering_equal;
+			rhs_first < rhs_last ? strong_ordering::greater :
+			lhs_first < lhs_last ? strong_ordering::less :
+			strong_ordering_equal;
 	}
 
 	// Does something like `equal3` above
-	auto compare3(std::vector<T> const & lhs, std::vector<T> const & rhs) -> decltype(std::declval<T>() <=> std::declval<T>()) {
-		auto impl = [](std::vector<T> const & smaller, std::vector<T> const & larger) {
+	auto compare3(vector<T> const & lhs, vector<T> const & rhs) {
+		auto impl = [](vector<T> const & smaller, vector<T> const & larger) {
 			auto smaller_first = smaller.begin();
 			auto const smaller_last = smaller.end();
 			auto larger_first = larger.begin();
 			while (smaller_first != smaller_last) {
-				if (auto const cmp = std::compare_3way(*smaller_first, *larger_first); cmp != 0) {
+				if (auto const cmp = compare_3way(*smaller_first, *larger_first); cmp != 0) {
 					return cmp;
 				}
 				++smaller_first;
 				++larger_first;
 			}
-			return larger_first == larger.end() ? std::strong_ordering::equal : std::strong_ordering::less;
+			return larger_first == larger.end() ? strong_ordering::equal : strong_ordering::less;
 		};
 		auto reverse_ordering = [](auto order) {
 			// Turn less into greater and greater into less, but do nothing to
@@ -195,11 +195,11 @@ The containers on this list provide only `operator==` and `operator!=`. Their `o
 This is a tempting solution. The author of the range type merely defines their own `operator==` (and `operator!=` in terms of it) that does the size short circuiting. Unfortunately, this solution just pushes the problem up. If we define `operator==` and `operator!=` for ranges, we run into the same problem with the obvious specification of `operator<=>` for types like `tuple`, so now any type that calls another type's `operator<=>` also has to define its own `operator==` and `operator!=`. Even if we specify types like `tuple` to have all three of `operator<=>`, `operator==`, and `operator!=`, current wording for `operator<=>` would make user-defined types like
 
 	struct S {
-		std::string str;
+		string str;
 		auto operator<=>(S const &) const = default;
 	};
 
-slower than `std::string`. If we accept this library-only solution, we must sacrifice maintainability and respecting the programmer's time.
+slower than `string`. If we accept this library-only solution, we must sacrifice maintainability and respecting the programmer's time.
 
 ### Define `operator==` and `operator!=` for ranges, and synthesize those operators in general
 
@@ -242,7 +242,7 @@ The previous solutions accept that `operator<=>` is slower than `operator==` and
 
 What does an `operator<=>` that gives this ordering look like?
 
-	auto compare1(std::vector<T> const & lhs, std::vector<T> const & rhs) -> decltype(std::compare_3way(std::declval<T>(), std::declval<T>())) {
+	auto compare1(vector<T> const & lhs, vector<T> const & rhs) {
 		if (auto const cmp = lhs.size() <=> rhs.size(); cmp != 0) {
 			return cmp;
 		}
@@ -250,30 +250,30 @@ What does an `operator<=>` that gives this ordering look like?
 		auto const lhs_last = lhs.end();
 		auto rhs_first = rhs.begin();
 		while (lhs_first != lhs_last) {
-			if (auto const cmp = std::compare_3way(*lhs_first, *rhs_first); cmp != 0) {
+			if (auto const cmp = compare_3way(*lhs_first, *rhs_first); cmp != 0) {
 				return cmp;
 			}
 			++lhs_first;
 			++rhs_first;
 		}
-		return std::strong_ordering_equal;
+		return strong_ordering_equal;
 	}
 
 Now we are back to essentially the same fast code that we had for `equal1`.
 
 This operator fully embraces the idea that for many uses, "any order" is sufficient, so it provides the fastest strong ordering possible. There are certainly users that depend on the order of these wrappers (that is to say, they need the specific order given by a lexicographical comparison, they do not just need any ordering). This means that the straightforward application of this change would be a major, silent breaking change. But is there some clever way we can do this such that it does not break any users?
 
-One thought could be to define `operator<=>` with this new order only for those types that, themselves, define `operator<=>`. We know that no user code is doing this today, so no existing code will change behavior. This immediately runs into one major stumbling block, the foremast example of which is `std::basic_string<char>`. `char` has `operator<=>`, and changing the default sorting order of strings is likely the biggest breaking change in this category. If we try to exclude `basic_string<char>` from this change in ordering, we also lose out on most of the performance benefits.
+One thought could be to define `operator<=>` with this new order only for those types that, themselves, define `operator<=>`. We know that no user code is doing this today, so no existing code will change behavior. This immediately runs into one major stumbling block, the foremast example of which is `basic_string<char>`. `char` has `operator<=>`, and changing the default sorting order of strings is likely the biggest breaking change in this category. If we try to exclude `basic_string<char>` from this change in ordering, we also lose out on most of the performance benefits.
 
 The other option would be to make this change for `operator<=>` only. The long-term plan could be for `operator==` and `operator!=` to not be defined explicitly for these wrapper types (they just defer to `operator<=>`), but the relational operators remain and provide a lexicographical ordering. This maintains backward compatibility and ensures that we generate code that is fast by default, but has a huge loss in consistency (for all of the most common standard library types, `a <=> b < 0` is not the same as `a < b`, despite that being the rewrite rule).
 
-In theory, [there could exist a tool](http://www.open-std.org/mailman/listinfo/tooling) that (as part of the C++20 upgrade process) rewrote all existing uses of relational operators like `operator<` to be `std::lexicographical_compare` for affected containers...
+In theory, [there could exist a tool](http://www.open-std.org/mailman/listinfo/tooling) that (as part of the C++20 upgrade process) rewrote all existing uses of relational operators like `operator<` to be `lexicographical_compare` for affected containers...
 
 ## How to specify wrapper types (other than the performance problem)
 
-Any solution we decide on (other than the non-solution of not providing `operator<=>` for any of these types) will have at least one thing in common: the return type will be the common comparison result type for comparing each of the elements, similar to `std::lexicographical_compare_3way`.
+Any solution we decide on (other than the non-solution of not providing `operator<=>` for any of these types) will have at least one thing in common: the return type will be the common comparison result type for comparing each of the elements, similar to `lexicographical_compare_3way`.
 
-When given a type that does not have `operator<=>`, there are two distinct possibilities: either we provide `operator<=>` or we do not. The standard library has `std::compare_3way`, which calls `operator<=>` if possible, otherwise it synthesizes it from `operator==` and `operator<`. If we require all calls in wrapper types to go through `compare_3way` rather than `operator<=>` on all wrapped types, we get `operator<=>` automatically for free. This would also work with the default `std::lexicographical_compare_3way` as an implementation strategy. It seems better to always provide `operator<=>` to give a consistent user experience ("`std::vector<T>` always has `operator<=>`") and it can give better performance in situations that require 3-way comparisons -- in the case of `vector<vector<T>>`, for instance, doing all necessary comparisons on the first `vector` element, even if that implementation is synthesized, means that you iterate over the outer vector only once, which is slightly less traffic on your memory bus.
+When given a type that does not have `operator<=>`, there are two distinct possibilities: either we provide `operator<=>` or we do not. The standard library has `compare_3way`, which calls `operator<=>` if possible, otherwise it synthesizes it from `operator==` and `operator<`. If we require all calls in wrapper types to go through `compare_3way` rather than `operator<=>` on all wrapped types, we get `operator<=>` automatically for free. This would also work with the default `lexicographical_compare_3way` as an implementation strategy. It seems better to always provide `operator<=>` to give a consistent user experience ("`vector<T>` always has `operator<=>`") and it can give better performance in situations that require 3-way comparisons -- in the case of `vector<vector<T>>`, for instance, doing all necessary comparisons on the first `vector` element, even if that implementation is synthesized, means that you iterate over the outer vector only once, which is slightly less traffic on your memory bus.
 
 However, we would not want to remove all of the old comparison operators for types that do not define `operator<=>`, otherwise we would have a silent performance degredation from C++17 to C++20. Here, we have a choice again. We can define the 6 comparison operators only for those types that do not define `operator<=>`, or we can define them always. Here, it probably makes sense to define them only for types that do not have `operator<=>`, unless we go for a solution to the performance problem that involves generating `operator==` and `operator!=`, in which case we should define those as well.
 
