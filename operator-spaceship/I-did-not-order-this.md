@@ -183,8 +183,8 @@ All of these are either fixed-size (in many cases, size == 1) or, in the case of
 ### Containers that are not affected by this performance problem
 
 * `unordered_map`
-* `unodered_set`
-* `unodered_multimap`
+* `unordered_set`
+* `unordered_multimap`
 * `unordered_multiset`
 
 The containers on this list provide only `operator==` and `operator!=`. Their `operator<=>` will return, at best, `strong_equality`. As long as a valid implementation of `operator<=>` is to call `a == b` for each element, these containers are unaffected by the performance problem outlined in this paper.
