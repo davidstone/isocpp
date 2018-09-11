@@ -24,7 +24,7 @@ There are many types in the standard library that have comparison operators that
 
 * **Performance**: "You don't pay for what you don't use". This is the guiding principle of C++. The abstractions provided by the language should be at least as efficient as those that a programmer could code manually. We should not impose unnecessary overhead.
 * **Maintainability**: "Don't repeat yourself". We want to specify a particular behavior in exactly one place.
-* **Respect the programmer's time**: "Make easy things easy". If the language can make a decision that is always (or almost always) correct, then we should not have to do it manually. If we either want a feature or we do not, but if we want it, there is only one way to do it, we should not require code to say how to do it.
+* **Respect the programmer's time**: "Make easy things easy". If the language can make a decision that is always (or almost always) correct, then we should not have to do it manually. If there is only one way to implement a feature, we should not require code to say *how* to do it.
 * **Respect the programmer's choices**: "Make hard things possible". Conversely, if there are many trade-offs involved and we cannot make one decision to fit everyone, we should refrain from making that decision for everyone.
 * **Backward compatibility**: The more existing code we break, the stronger justification we need. It is better to cause existing code to fail to compile rather than silently change behavior.
 
@@ -60,7 +60,7 @@ Prior to `operator<=>`, how do you implement `operator==` for a `SequenceContain
 		return true;
 	}
 
-This ensures that two differently-sized containers will immediately return false. It performs a single comparison of a data member within the `vector`, then each iteration is performs a single iterator comparison. It is important to note that the early size check lets us avoid following the internal data pointer in the container and lets us avoid a loop / function call. If we try to implement this without having the size check (note that it is currently mandated that implementations perform this size check), we have two possible solutions:
+This ensures that two differently-sized containers will immediately return false. It performs a single comparison of a data member within the `vector`, then each iteration performs a single iterator comparison. It is important to note that the early size check lets us avoid following the internal data pointer in the container and lets us avoid a loop / function call. If we try to implement this without having the size check (note that it is currently mandated that implementations perform this size check), we have two possible solutions:
 
 	template<typename T>
 	bool equal2(vector<T> const & lhs, vector<T> const & rhs) {
