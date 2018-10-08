@@ -9,11 +9,10 @@ Audience: Library Evolution Working Group (LEWG)
 
 ## Dependencies
 
-* [PXXXX: `operator<=>` should be strong](http://wg21.link/PXXXX)
 * [P0790: Effect of `operator<=>` on the C++ Standard Library](http://wg21.link/P0790)
 * [P1190: I did not order this](http://wg21.link/P1190)
 
-## Summary
+## Background
 
 We currently have several facilities to compare things (mostly strings). We should unify on "the one true way". For reference, the currently existing functionality relevant to this paper (other than existing comparison operators) is:
 
