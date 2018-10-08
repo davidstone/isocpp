@@ -13,6 +13,8 @@ This paper proposes allowing anything which is currently specified as accepting 
 
 This paper also proposes a general library requirement that if `a <=> b` is valid, it is consistent with all other comparison operators. In other words, for every comparison operator (`==`, `!=`, `<`, `<=`, `>`, and `>=`) and for every value of `a` and `b`, `(a @ b) == (a <=> b @ 0)`. In particular, any function that accepts a type meeting the `LessThanComparable` concept should be able to call `a <=> b` instead of `a < b` if `a <=> b` is well-formed. Whether an implementation calls `<=>` or any of the 6 traditional comparison operators is not considered an observable difference.
 
+This paper does not recommend changing the definitions of the comparable type concepts (such as `LessThanComparable`) to require `operator<=>`. `operator<=>` is a valid implementation strategy to satisfy these concepts, but should not be required, as all that we care about for these concepts is the direct comparisons. This ensures backward compatibility with old user-defined types.
+
 ## Motivation
 
 This is especially important in the case of `Compare` to maximize efficiency. We would like users to be able to pass in function objects that are three-way-comparison-aware. Right now, `std::map<std::string, T, Compare>` has to make two passes over each `string` it compares if that string does not compare less. The `operator<=>` proposal gives us a more efficient way to do things (guaranteed single pass), so we should take advantage of it where possible. This paper does not propose changing the default template argument for `map`, but this paper does allow users to create something more efficient.
