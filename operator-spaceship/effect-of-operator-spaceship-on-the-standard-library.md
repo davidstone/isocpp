@@ -161,7 +161,7 @@ These types are not comparable now. This paper does not propose adding any new c
 
 ## Types that should get `operator<=>`, no change from current comparisons
 
-These types are all currently comparable. The only somewhat tricky decisions are in deciding whether to use a strong or weak comparison category.
+These types are all currently comparable.
 
 * `error_category`: `strong_ordering`
 * `error_code`: `strong_ordering`
@@ -326,32 +326,11 @@ Already supports `strong_equality` in the working draft. I will be writing a sep
 
 ## Not Updating Concepts That Provide Comparisons
 
-This category includes things like `BinaryPredicate` and `Compare`. There will be a separate paper proposing what to do about those concepts.
+This category includes things like `BinaryPredicate` and `Compare`. This is addressed in a separate paper.
 
 ## Not Updating Concepts That Require Comparisons
 
-When we specify generic type concepts, should we specify in terms of `operator<=>`? If we do so, it means that functions that accept a user-defined type corresponding to some concept no longer match that concept, unless the user-defined type adds `operator<=>`. As an example, the `RandomAccessIterator` concept requires all six operators to be present. At some point in the future, do we want to change this requirement to `weak_ordering operator<=>`? Same with weaker iterator concepts, do we want `weak_equality` or stronger? The following are the minimal mappings that I believe each concept requires:
-
-* `EqualityComparable`: `weak_equality`
-* `LessThanComparable`: `weak_ordering` (this would exclude floating point values, as `LessThanComparable` requires a strict weak ordering)
-* `NullablePointer`: inherits `EqualityComparable`, additionally requires `!=` (works automatically if we change `EqualityComparable` to require `weak_equality`). Requires heterogeneous `weak_equality` with `nullptr_t`.
-* `InputIterator`: inherits `EqualityComparable`, additionally requires `!=` (works automatically if we change `EqualityComparable` to require `weak_equality`).
-* `Allocator`: `weak_equality`, heterogeneous with the equivalent `Allocator` for other types
-* `"bitmask type"`: `strong_equality` (it might be a `bitset`, which supports only equality, it might be integer or enum, which supports ordering, but this will naturally fall out, no wording changes are needed here)
-* We redundantly specify `weak_ordering` for `TrivialClock::rep`, `TrivialClock::duration`, and `TrivialClock::time_point`, but that is implied because we know they are an arithmetic type, a `chrono::duration`, and a `chrono::time_point`, respectively.
-
-Note that by applying `operator<=>`, we frequently end up with more operators than just those minimally required by the existing concept.
-
-This paper does not recommend changing the definitions of these concepts to require `operator<=>`. `operator<=>` is a valid implementation strategy to satisfy these concepts, but should not be required, as all that we care about for these concepts is the direct comparisons. This ensures backward compatibility with old user-defined types.
-
-## Deprecation
-
-We should deprecate the following functions in favor of `operator<=>`.
-
-* `istreambuf_iterator::equal`.
-* `filesystem::path::compare`.
-
-`std::filesystem::equivalent` currently exists and provides a weak equality ("Do these two paths resolve to the same file?"). Should this be deprecated in favor of the new generic free function `std::weak_equal`?
+This includes things like `LessThanComparable` and `EqualityComparable`. This is addressed in a separate paper.
 
 ## Miscellaneous
 
