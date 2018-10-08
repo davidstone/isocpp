@@ -6,15 +6,13 @@ Author: David Stone (&#100;&#97;&#118;&#105;&#100;&#109;&#115;&#116;&#111;&#110;
 Audience: LEWG, LWG
 </pre>
 
-This paper lists (what are expected to be) non-controversial changes to the C++ standard library in response to [P0515](https://wg21.link/P0515), which adds `operator<=>` to the language. This is expected to be non-controversial because it tries to match existing behavior as much as possible.
-
-My general algorithm to determine what operations to support are: If the type represents a value of some sort, it should at least be `weak_equality`. If the type has some sort of meaningful ordering, it should have `weak_ordering`. We should be cautious in giving polymorphic types `operator<=>` (but if they already have other comparison operators, then we might as well).
+This paper lists (what are expected to be) non-controversial changes to the C++ standard library in response to [P0515](https://wg21.link/P0515), which adds `operator<=>` to the language. This is expected to be non-controversial because it tries to match existing behavior as much as possible. As a result, all proposed additions are either `strong_equality` or `strong_ordering`, matching the existing comparison operators.
 
 This document should contain a complete list of types or categories of types in C++.
 
 ## Revision History
 
-R1: A much broader version of this paper was presented to LEWG at a previous meeting. What remains in this paper is everything which the group did not find controversial and which does not require significant justification. All controversial aspects will be submitted in separate papers.
+R1: A much broader version of this paper was presented to LEWG at a previous meeting. What remains in this paper is everything which the group did not find controversial and which probably does not require significant justification. All controversial aspects will be submitted in separate papers.
 
 ## Backward Compatibility
 
