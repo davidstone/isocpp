@@ -319,16 +319,6 @@ This paper does not propose changing any of the following types -- they are here
 * `slice`
 * `to_chars_result`
 * `from_chars_result`
-* `div_t`
-* `ldiv_t`
-* `lldiv_t`
-* `imaxdiv_t`
-* `timespec`
-* `tm`
-* `lconv`
-* `fenv_t`
-* `fpos_t`
-* `mbstate_t`
 
 ## `nullptr_t`
 
