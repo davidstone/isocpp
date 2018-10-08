@@ -105,6 +105,7 @@ These types are not comparable now. This paper does not propose adding any new c
 * `basic_ifstream`
 * `basic_ofstream`
 * `basic_fstream`
+* `gslice`
 * `slice_array`
 * `gslice_array`
 * `mask_array`
@@ -316,7 +317,6 @@ This paper does not propose changing any of the following types -- they are here
 * `filesystem::file_status`
 * `filesystem::space_info`
 * `slice`
-* `gslice`
 * `to_chars_result`
 * `from_chars_result`
 * `div_t`
