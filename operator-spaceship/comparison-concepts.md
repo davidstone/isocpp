@@ -11,7 +11,7 @@ Audience: LEWG
 
 This paper proposes allowing anything which is currently specified as accepting a `BinaryPredicate` to also accept a function that returns a comparison category implicitly convertible to `weak_equality`. Anything which is currently specified as accepting a `Compare` should also accept a function that returns a comparison category implicitly convertible to `weak_ordering`.
 
-This paper also proposes a general library requirement that if `a <=> b` is valid, it is consistent with all other comparison operators. In particular, any function that accepts a type meeting the `LessThanComparable` concept should be able to call `a <=> b` instead of `a < b` if `a <=> b` is well-formed.
+This paper also proposes a general library requirement that if `a <=> b` is valid, it is consistent with all other comparison operators. In other words, for every comparison operator (`==`, `!=`, `<`, `<=`, `>`, and `>=`) and for every value of `a` and `b`, `(a @ b) == (a <=> b @ 0)`. In particular, any function that accepts a type meeting the `LessThanComparable` concept should be able to call `a <=> b` instead of `a < b` if `a <=> b` is well-formed. Whether an implementation calls `<=>` or any of the 6 traditional comparison operators is not considered an observable difference.
 
 ## Motivation
 
