@@ -27,4 +27,6 @@ The following types do not currently have comparison operators. They should be m
 
 This paper does not propose adding `operator<=>` to `gslice`. This object is much like `slice` except `size` and `stride` are instances of `valarray<size_t>` rather than just `size_t`. Since `valarray` does not have a traditional comparison, we do not attempt to define the equivalent for `gslice`.
 
+`to_chars_result` is a struct that stores an iterator `ptr` and an `errc` `ec`. Two `to_chars_result` objects compare equal if both `ptr` and `ec` compare equal.
 
+`from_chars_result` is a struct that stores an iterator `ptr` and an `errc` `ec`. Two `from_chars_result` objects compare equal if both `ptr` and `ec` compare equal.
