@@ -13,6 +13,7 @@ This document should contain a complete list of types or categories of types in 
 ## Revision History
 
 R1: A much broader version of this paper was presented to LEWG at a previous meeting. What remains in this paper is everything which the group did not find controversial and which probably does not require significant justification. All controversial aspects will be submitted in separate papers.
+R2: Added wording.
 
 ## Backward Compatibility
 
@@ -237,7 +238,6 @@ These types are not comparable now. This paper does not propose adding any new c
 * `unordered_multimap::iterator`
 * `unodered_multiset::iterator`
 
-
 ## Types that should get `<=>` with a return type of `strong_ordering`, no change from current comparisons
 
 These types are all currently comparable.
@@ -338,3 +338,471 @@ This includes things like `LessThanComparable` and `EqualityComparable`. This is
 All `operator<=>` should be `constexpr` and `noexcept` where possible, following the lead of the language feature and allowing `= default` as an implementation strategy for some types.
 
 When we list a result type as "unspecified" it is unspecified whether it has `operator<=>`. There are not any unspecified result types for which we currently guarantee any comparison operators are present, so there is no extra work to do here.
+
+## Wording
+
+All wording is relative to [N4791](http://www.open-std.org/jtc1/sc22/wg21/docs/papers/2018/n4791.pdf).
+
+### General wording
+
+15.4.2.3  Operators [operators]
+
+<del>1 In this library, whenever a declaration is provided for an `operator!=`, `operator>`, `operator<=`, or `operator>=` for a type `T`, its requirements and semantics are as follows, unless explicitly specified otherwise.
+
+	bool operator!=(const T& x, const T& y);
+
+2 Requires: Type `T` is `Cpp17EqualityComparable` (Table 23).
+
+3 Returns: `!(x == y)`.
+
+	bool operator>(const T& x, const T& y);
+
+4 Requires: Type `T` is `Cpp17LessThanComparable` (Table 24).
+
+5 Returns: `y < x`.
+
+	bool operator<=(const T& x, const T& y);
+
+6 Requires: Type `T` is `Cpp17LessThanComparable` (Table 24).
+
+7 Returns: `!(y < x)`.
+
+	bool operator>=(const T& x, const T& y);
+
+8 Requires: Type `T` is `Cpp17LessThanComparable` (Table 24).
+
+9 Returns: `!(x < y)`.</del>
+
+<ins>1 Unless specified otherwise, if `lhs` and `rhs` are values of types from this library, the following shall hold:
+* `lhs != rhs` is a valid expression if and only if `lhs == rhs` is a valid expression.
+* `lhs < rhs`, `lhs > rhs`, `lhs <= rhs`, and `lhs >= rhs` are all valid expressions if and only if `lhs <=> rhs` is a valid expression.
+* If `lhs <=> rhs` is a valid expression, `lhs == rhs` is a valid expression.
+
+The requirements and semantics of these operators are as follows, unless explicitly specified otherwise.
+
+| Expression | Return type | Operational semantics |
+| ---------- | ---------- | ---------- |
+| `lhs <=> rhs` | `std::strong_ordering` | If `lhs <=> rhs` yields `std::strong_ordering::equal`, the two objects have an equivalence relation as described in Cpp17EqualityComparable ([utility.arg.requirements]). Regardless of the return value, `lhs <=> rhs` is a total ordering relation (24.7). |
+| `lhs == rhs` | Convertible to `bool` | `lhs <=> rhs == 0` |
+| `lhs != rhs` | Convertible to `bool` | `!(lhs == rhs)` |
+| `lhs < rhs` | Convertible to `bool` | `lhs <=> rhs < 0` |
+| `lhs > rhs` | Convertible to `bool` | `lhs <=> rhs > 0` |
+| `lhs <= rhs` | Convertible to `bool` | `lhs <=> rhs <= 0` |
+| `lhs >= rhs` | Convertible to `bool` | `lhs <=> rhs >= 0` |
+
+
+### `error_category`
+
+18.5.2.3 Non-virtual members [syserr.errcat.nonvirtuals]
+constexpr error_category() noexcept;
+1 Effects: Constructs an object of class error_category.
+
+<del>	bool operator==(const error_category& rhs) const noexcept;
+2 Returns: `this == &rhs`.
+	bool operator!=(const error_category& rhs) const noexcept;
+3 Returns: `!(*this == rhs)`.
+	bool operator<(const error_category& rhs) const noexcept;
+4 Returns: `less<const error_category*>()(this, &rhs)`.
+[Note: `less` (19.14.7) provides a total ordering for pointers. — end note]</del>
+<ins>18.5.2.4 Comparisons [syserr.errcat.comparisons]
+
+For two values `lhs` and `rhs` of type `error_category`, the expression `lhs <=> rhs` is of type `std::strong_­ordering`. If the address of `lhs` and `rhs` compare equal ([expr.eq]), `lhs <=> rhs` yields `std::strong_­ordering::equal`; if `lhs` and `rhs` compare unequal, `lhs <=> rhs` yields `std::strong_­ordering::less` if `std::less{}(&lhs, &rhs)` is `true` ([comparisons]), otherwise yields `std::strong_ordering::greater`.</ins>
+
+18.5.2.<del>4</del><ins>5</ins> Program-defined classes derived from error_category [syserr.errcat.derived]
+
+[...]
+
+18.5.2.<del>5</del><ins>6</ins> Error category objects [syserr.errcat.objects]
+
+### `error_code` and `error_condition`
+
+18.5.5 Comparison functions [syserr.compare]
+<del>	bool operator==(const error_code& lhs, const error_code& rhs) noexcept;
+
+1 Returns: `lhs.category() == rhs.category() && lhs.value() == rhs.value()`
+
+	bool operator==(const error_code& lhs, const error_condition& rhs) noexcept;
+
+2 Returns: `lhs.category().equivalent(lhs.value(), rhs) || rhs.category().equivalent(lhs, rhs.value())`
+
+	bool operator==(const error_condition& lhs, const error_code& rhs) noexcept;
+
+3 Returns: `rhs.category().equivalent(rhs.value(), lhs) || lhs.category().equivalent(rhs, lhs.value())`
+
+	bool operator==(const error_condition& lhs, const error_condition& rhs) noexcept;
+
+4 Returns: `lhs.category() == rhs.category() && lhs.value() == rhs.value()`
+
+	bool operator!=(const error_code& lhs, const error_code& rhs) noexcept;
+	bool operator!=(const error_code& lhs, const error_condition& rhs) noexcept;
+	bool operator!=(const error_condition& lhs, const error_code& rhs) noexcept;
+	bool operator!=(const error_condition& lhs, const error_condition& rhs) noexcept;
+
+5 Returns: `!(lhs == rhs)`.
+
+	bool operator<(const error_code& lhs, const error_code& rhs) noexcept;
+
+6 Returns: `lhs.category() < rhs.category() || (lhs.category() == rhs.category() && lhs.value() < rhs.value())`
+
+	bool operator<(const error_condition& lhs, const error_condition& rhs) noexcept;
+
+7 Returns: `lhs.category() < rhs.category() || (lhs.category() == rhs.category() && lhs.value() < rhs.value())`</del>
+<ins>For values `lhs_code` and `rhs_code` of type `error_code` and values `lhs_condition` and `rhs_condition` of type `error_condition`, the following holds:
+
+1. The expression `lhs_code <=> rhs_code` is of type `std::strong_­ordering`. Equivalent to `std::tie(lhs_code.category(), lhs_code.value()) <=> std::tie(rhs_code.category(), rhs_code.value())`.
+2. The expression `lhs_condition <=> rhs_condition` is of type `std::strong_­ordering`. Equivalent to `std::tie(lhs_condition.category(), lhs_condition.value()) <=> std::tie(rhs_condition.category(), rhs_condition.value())`.
+3. The expression `lhs_code == rhs_condition` is of type `bool`. Equivalent to `lhs_code.category().equivalent(lhs_code.value(), rhs_condition) || rhs_condition.category().equivalent(lhs_code, rhs_category.value())`.
+
+[Note: The function `tie` is defined in Clause 19.5. — end note]</ins>
+
+### `monostate`
+
+19.7.9 monostate relational operators [variant.monostate.relops]
+
+<del>	constexpr bool operator==(monostate, monostate) noexcept { return true; }
+	constexpr bool operator!=(monostate, monostate) noexcept { return false; }
+	constexpr bool operator<(monostate, monostate) noexcept { return false; }
+	constexpr bool operator>(monostate, monostate) noexcept { return false; }
+	constexpr bool operator<=(monostate, monostate) noexcept { return true; }
+	constexpr bool operator>=(monostate, monostate) noexcept { return true; }</del>
+<ins>For two values `lhs` and `rhs` of type `monostate`, the expression `lhs <=> rhs` is of type `std::strong_­ordering` and yields `std::strong_­ordering::equal`.</ins>
+
+[Note: monostate objects have only a single state; they thus always compare equal. — end note]
+
+### `type_index`
+
+19.17.2 type_index overview [type.index.overview]
+
+	namespace std {
+		class type_index {
+		public:
+			type_index(const type_info& rhs) noexcept;
+<del>			bool operator==(const type_index& rhs) const noexcept;
+			bool operator!=(const type_index& rhs) const noexcept;
+			bool operator< (const type_index& rhs) const noexcept;
+			bool operator> (const type_index& rhs) const noexcept;
+			bool operator<= (const type_index& rhs) const noexcept;
+			bool operator>= (const type_index& rhs) const noexcept;</del>
+			size_t hash_code() const noexcept;
+			const char* name() const noexcept;
+		private:
+			const type_info* target;
+			// exposition only
+			// Note that the use of a pointer here, rather than a reference,
+			// means that the default copy/move constructor and assignment
+			// operators will be provided and work as expected.
+		};
+	}
+
+1 The class `type_index` provides a simple wrapper for `type_info` which can be used as an index type in associative containers (21.4) and in unordered associative containers (21.5).
+
+19.17.3 `type_index` members [type.index.members]
+
+	type_index(const type_info& rhs) noexcept;
+
+1 Effects: Constructs a `type_index` object, the equivalent of `target = &rhs`.
+
+<del>	bool operator==(const type_index& rhs) const noexcept;
+
+2 Returns: `*target == *rhs.target`.
+
+	bool operator!=(const type_index& rhs) const noexcept;
+
+3 Returns: `*target != *rhs.target`.
+
+	bool operator<(const type_index& rhs) const noexcept;
+
+4 Returns: `target->before(*rhs.target)`.
+
+	bool operator>(const type_index& rhs) const noexcept;
+
+5 Returns: `rhs.target->before(*target)`.
+
+	bool operator<=(const type_index& rhs) const noexcept;
+
+6 Returns: `!rhs.target->before(*target)`.
+
+	bool operator>=(const type_index& rhs) const noexcept;
+
+7 Returns: `!target->before(*rhs.target)`.</del>
+
+	size_t hash_code() const noexcept;
+
+<del>8</del><ins>2</ins> Returns: `target->hash_code()`.
+
+	const char* name() const noexcept;
+
+<del>9</del><ins>2</ins> Returns: `target->name()`.
+
+19.17.4  Hash support [type.index.hash]
+
+	template<> struct hash<type_index>;
+
+1 For an object `index` of type `type_index`, `hash<type_index>()(index)` shall evaluate to the same result as `index.hash_code()`.
+
+<ins>19.17.5 Comparisons [type.index.comparisons]
+
+For two values `lhs` and `rhs` of type `type_index`, the expression `lhs <=> rhs` is of type `std::strong_­ordering`. If  `*lhs.target == *rhs.target`, `lhs <=> rhs` yields `std::strong_­ordering::equal`; if `lhs` and `rhs` compare unequal, `lhs <=> rhs` yields `std::strong_­ordering::less` if `lhs.target->before(*rhs.target)` is `true`, otherwise yields `std::strong_ordering::greater`. [Note: A result of `std::strong_ordering::greater` happens only in the case where `rhs.target->before(*lhs.target)` is `true`. — end note]</ins>
+
+### Iterators
+
+Amend the requirements table for `Cpp17RandomAccessIterator` (22.3.5.6) requirements:
+
+| Expression | Return type | Operational semantics | Assertion/note pre-/post-condition |
+| ---------- | ---------- | ---------- | ---------- |
+| <del>a < b</del> | <del>contextually convertible to `bool`</del> | <del>`b - a > 0`</del> | <del>`<` is a total ordering relation</del> |
+| <del>a > b</del> | <del>contextually convertible to `bool`</del> | <del>`b < a`</del> | <del>`>` is a total ordering relation opposite to `<`.</del> |
+| <del>a >= b</del> | <del>contextually convertible to `bool`</del> | <del>`!(a < b)`</del> |  |
+| <del>a <= b</del> | <del>contextually convertible to `bool`</del> | <del>`!(a > b)`</del> |  |
+| <ins>a <=> b</ins> | <ins>`std::strong_ordering`</ins> |  | <ins>`<=>` is a total ordering relation</ins> |
+
+### `chrono::duration`
+
+26.5.6  Comparisons [time.duration.comparisons]
+1 In the function descriptions that follow, CT represents `common_type_t<A, B>`, where `A` and `B` are the types of the two arguments to the function.
+
+<del>	template<class Rep1, class Period1, class Rep2, class Period2>
+	constexpr bool operator==(const duration<Rep1, Period1>& lhs, const duration<Rep2, Period2>& rhs);
+2 Returns: `CT(lhs).count() == CT(rhs).count()`.
+
+	template<class Rep1, class Period1, class Rep2, class Period2>
+	constexpr bool operator!=(const duration<Rep1, Period1>& lhs, const duration<Rep2, Period2>& rhs);
+3 Returns: `!(lhs == rhs)`.
+
+	template<class Rep1, class Period1, class Rep2, class Period2>
+	constexpr bool operator<(const duration<Rep1, Period1>& lhs, const duration<Rep2, Period2>& rhs);
+4 Returns: `CT(lhs).count() < CT(rhs).count()`.
+
+	template<class Rep1, class Period1, class Rep2, class Period2>
+	constexpr bool operator>(const duration<Rep1, Period1>& lhs, const duration<Rep2, Period2>& rhs);
+5 Returns: `rhs < lhs`.
+
+	template<class Rep1, class Period1, class Rep2, class Period2>
+	constexpr bool operator<=(const duration<Rep1, Period1>& lhs, const duration<Rep2, Period2>& rhs);
+6 Returns: `!(rhs < lhs)`.
+
+	template<class Rep1, class Period1, class Rep2, class Period2>
+	constexpr bool operator>=(const duration<Rep1, Period1>& lhs, const duration<Rep2, Period2>& rhs);
+7 Returns: `!(lhs < rhs)`.</del>
+<ins>For two values `lhs` and `rhs`, each of which are instances of the class template `std::chrono::duration` (with possibly different `Rep` and `Period` template parameters), the expression `lhs <=> rhs` is equivalent to `CT(lhs).count() <=> CT(rhs).count()`. [Note: This implies the operation is `constexpr` if both `lhs` and `rhs` are `constexpr`. — end note]</ins>
+
+### `chrono::time_point`
+
+26.6.6  Comparisons [time.point.comparisons]
+
+<del>	template<class Clock, class Duration1, class Duration2>
+	constexpr bool operator==(const time_point<Clock, Duration1>& lhs, const time_point<Clock, Duration2>& rhs);
+1 Returns: `lhs.time_since_epoch() == rhs.time_since_epoch()`.
+
+	template<class Clock, class Duration1, class Duration2>
+	constexpr bool operator!=(const time_point<Clock, Duration1>& lhs, const time_point<Clock, Duration2>& rhs);
+2 Returns: `!(lhs == rhs)`.
+
+	template<class Clock, class Duration1, class Duration2>
+	constexpr bool operator<(const time_point<Clock, Duration1>& lhs, const time_point<Clock, Duration2>& rhs);
+3 Returns: `lhs.time_since_epoch() < rhs.time_since_epoch()`.
+
+	template<class Clock, class Duration1, class Duration2>
+	constexpr bool operator>(const time_point<Clock, Duration1>& lhs, const time_point<Clock, Duration2>& rhs);
+4 Returns: `rhs < lhs`.
+	template<class Clock, class Duration1, class Duration2>
+	constexpr bool operator<=(const time_point<Clock, Duration1>& lhs, const time_point<Clock, Duration2>& rhs);
+5 Returns: `!(rhs < lhs)`.
+
+	template<class Clock, class Duration1, class Duration2>
+	constexpr bool operator>=(const time_point<Clock, Duration1>& lhs, const time_point<Clock, Duration2>& rhs);
+6 Returns: `!(lhs < rhs)`.</del>
+<ins>For two values `lhs` and `rhs`, each of which are instances of the class template `std::chrono::time_point` (with possibly the same `Clock` template parameter but possibly different `Duration` template parameters), the expression `lhs <=> rhs` is equivalent to `CT(lhs).time_since_epoch() <=> CT(rhs).time_since_epoch()`. [Note: This implies the operation is `constexpr` if both `lhs` and `rhs` are `constexpr`. — end note]</ins>
+
+### `filesystem::path`
+
+Modify the class synopsis (28.11.7  Class `path` [fs.class.path]) to remove the specification of comparison operators as friend functions:
+
+	namespace std::filesystem {
+		class path {
+		public:
+			[...]
+<del>			// 28.11.7.7, non-member operators
+			friend bool operator==(const path& lhs, const path& rhs) noexcept;
+			friend bool operator!=(const path& lhs, const path& rhs) noexcept;
+			friend bool operator< (const path& lhs, const path& rhs) noexcept;
+			friend bool operator<=(const path& lhs, const path& rhs) noexcept;
+			friend bool operator> (const path& lhs, const path& rhs) noexcept;
+			friend bool operator>=(const path& lhs, const path& rhs) noexcept;
+			friend path operator/ (const path& lhs, const path& rhs);</del>
+			[...]
+		};
+	}
+
+Add the following at the end of 28.11.7.4.8 [fs.path.compare]:
+
+<ins>For two values `lhs` and `rhs` of type `std::filesystem::path`, the expression `lhs <=> rhs` is equivalent to `lhs.compare(rhs) <=> 0`</ins>
+
+28.11.7.7  Non-member functions [fs.path.nonmember]
+
+	void swap(path& lhs, path& rhs) noexcept;
+
+1 Effects: Equivalent to `lhs.swap(rhs)`.
+
+	size_t hash_value (const path& p) noexcept;
+
+2 Returns: A hash value for the path `p`. If for two paths, `p1 == p2` then `hash_value(p1) == hash_value(p2)`.
+
+<del>	friend bool operator==(const path& lhs, const path& rhs) noexcept;
+
+3 Returns: `!(lhs < rhs) && !(rhs < lhs)`.
+
+4 [Note: Path equality and path equivalence have different semantics.
+— (4.1) Equality is determined by the path non-member `operator==`, which considers the two paths’ lexical representations only. [Example: `path("foo") == "bar"` is never `true`. — end example]
+— (4.2) Equivalence is determined by the `equivalent()` non-member function, which determines if two paths resolve (28.11.7) to the same file system entity. [Example: `equivalent("foo", "bar")` will be `true` when both paths resolve to the same file. — end example]
+
+Programmers wishing to determine if two paths are “the same” must decide if “the same” means
+“the same representation” or “resolve to the same actual file”, and choose the appropriate function
+accordingly. — end note]
+
+	friend bool operator!=(const path& lhs, const path& rhs) noexcept;
+
+5 Returns: `!(lhs == rhs)`.
+
+	friend bool operator< (const path& lhs, const path& rhs) noexcept;
+
+6 Returns: `lhs.compare(rhs) < 0`.
+
+	friend bool operator<=(const path& lhs, const path& rhs) noexcept;
+
+7 Returns: `!(rhs < lhs)`.
+
+	friend bool operator> (const path& lhs, const path& rhs) noexcept;
+
+8 Returns: `rhs < lhs`.
+
+	friend bool operator>=(const path& lhs, const path& rhs) noexcept;
+
+9 Returns: `!(lhs < rhs)`.</del>
+
+	friend path operator/ (const path& lhs, const path& rhs);
+
+<del>10</del><ins>3</ins> Effects: Equivalent to: `return path(lhs) /= rhs;`
+
+### `filesystem::directory_entry`
+
+Amend the class synopsis:
+
+	namespace std::filesystem {
+		class directory_entry {
+		public:
+			[...]
+			
+<del>			bool operator==(const directory_entry& rhs) const noexcept;
+			bool operator!=(const directory_entry& rhs) const noexcept;
+			bool operator< (const directory_entry& rhs) const noexcept;
+			bool operator> (const directory_entry& rhs) const noexcept;
+			bool operator<=(const directory_entry& rhs) const noexcept;
+			bool operator>=(const directory_entry& rhs) const noexcept;</del>
+			
+			[...]
+		};
+	}
+
+Amend 28.11.11.3:
+
+<del>	bool operator==(const directory_entry& rhs) const noexcept;
+
+31 Returns: `pathobject == rhs.pathobject`.
+
+	bool operator!=(const directory_entry& rhs) const noexcept;
+
+32 Returns: `pathobject != rhs.pathobject`.
+
+	bool operator< (const directory_entry& rhs) const noexcept;
+
+33 Returns: `pathobject < rhs.pathobject`.
+
+	bool operator> (const directory_entry& rhs) const noexcept;
+
+34 Returns: `pathobject > rhs.pathobject`.
+
+	bool operator<=(const directory_entry& rhs) const noexcept;
+
+35 Returns: `pathobject <= rhs.pathobject`.
+
+	bool operator>=(const directory_entry& rhs) const noexcept;
+
+36 Returns: `pathobject >= rhs.pathobject`.</del>
+
+<ins>28.11.11.4 Comparisons [fs.dir.entry.comparisons]
+
+For two values `lhs` and `rhs` of type `std::filesystem::directory_entry`, the expression `lhs <=> rhs` is equivalent to `lhs.pathobject <=> rhs.pathobject`.</ins>
+
+### `thread::id`
+
+31.3.2.1  Class thread::id [thread.thread.id]
+
+	namespace std {
+		class thread::id {
+		public:
+			id() noexcept;
+		};
+<del>		bool operator==(thread::id x, thread::id y) noexcept;
+		bool operator!=(thread::id x, thread::id y) noexcept;
+		bool operator<(thread::id x, thread::id y) noexcept;
+		bool operator>(thread::id x, thread::id y) noexcept;
+		bool operator<=(thread::id x, thread::id y) noexcept;
+		bool operator>=(thread::id x, thread::id y) noexcept;</del>
+		template<class charT, class traits>
+		basic_ostream<charT, traits>&
+		operator<<(basic_ostream<charT, traits>& out, thread::id id);
+		// hash support
+		template<class T> struct hash;
+		template<> struct hash<thread::id>;
+	}
+
+1 An object of type `thread::id` provides a unique identifier for each thread of execution and a single distinct value for all `thread` objects that do not represent a thread of execution (31.3.2). Each thread of execution has an associated `thread::id` object that is not equal to the `thread::id` object of any other thread of execution and that is not equal to the `thread::id` object of any `thread` object that does not represent threads of execution.
+
+2 `thread::id` is a trivially copyable class (10.1). The library may reuse the value of a `thread::id` of a terminated thread that can no longer be joined.
+
+3 [Note: Relational operators allow `thread::id` objects to be used as keys in associative containers. — end note]
+
+	id() noexcept;
+
+4 Effects: Constructs an object of type `id`.
+
+5 Ensures: The constructed object does not represent a thread of execution.
+
+<del>	bool operator==(thread::id x, thread::id y) noexcept;
+
+6 Returns: `true` only if `x` and `y` represent the same thread of execution or neither `x` nor `y` represents a thread of execution.
+
+	bool operator!=(thread::id x, thread::id y) noexcept;
+
+7 Returns: `!(x == y)`
+
+	bool operator<(thread::id x, thread::id y) noexcept;
+
+8 Returns: A value such that `operator<` is a total ordering as described in 24.7.
+
+	bool operator>(thread::id x, thread::id y) noexcept;
+
+9 Returns: `y < x`.
+
+	bool operator<=(thread::id x, thread::id y) noexcept;
+
+10 Returns: `!(y < x)`.
+
+	bool operator>=(thread::id x, thread::id y) noexcept;
+
+11 Returns: `!(x < y)`.</del>
+
+	template<class charT, class traits>
+	basic_ostream<charT, traits>&
+	operator<< (basic_ostream<charT, traits>& out, thread::id id);
+
+<del>12</del><ins>6</ins> Effects: Inserts an unspecified text representation of `id` into `out`. For two objects of type `thread::id` `x` and `y`, if `x == y` the `thread::id` objects have the same text representation and if `x != y` the `thread::id` objects have distinct text representations.
+
+<del>13</del><ins>7</ins> Returns: `out`.
+
+	template<> struct hash<thread::id>;
+
+<del>14</del><ins>8</ins> The specialization is enabled (19.14.18).
+
+<ins>For two values `lhs` and `rhs` of type `std::thread::id`, the expression `lhs <=> rhs` is of type `std::strong_­ordering`. If `lhs` and `rhs` represent the same thread of execution or neither `x` nor `y` represents a thread of execution, `lhs <=> rhs` yields `std::strong_­ordering::equal`; if `lhs` and `rhs` compare unequal, `lhs <=> rhs` yields a value consistent with a total order as described in 24.7.</ins>
