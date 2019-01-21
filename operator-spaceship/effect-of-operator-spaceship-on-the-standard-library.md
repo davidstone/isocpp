@@ -32,6 +32,7 @@ These types are not comparable now. This paper does not propose adding any new c
 * bitwise function objects (`bit_and`, etc.)
 * `nested_exception`
 * `allocator_traits`
+* `pool_options`
 * `char_traits`
 * `iterator_traits`
 * `numeric_limits`
