@@ -237,31 +237,25 @@ These types are not comparable now. This paper does not propose adding any new c
 * `unodered_multiset::iterator`
 
 
-## Types that should get `operator<=>`, no change from current comparisons
+## Types that should get `<=>` with a return type of `strong_ordering`, no change from current comparisons
 
 These types are all currently comparable.
 
-* `error_category`: `strong_ordering`
-* `error_code`: `strong_ordering`
-* `error_condition`: `strong_ordering`
-* `exception_ptr`: `strong_ordering`
-* `monostate`: `strong_ordering`
-* `synchronized_pool_resource`: (implicitly from `memory_resource` base class)
-* `unsynchronized_pool_resource`: (implicitly from `memory_resource` base class)
-* `monotonic_buffer_resource`: (implicitly from `memory_resource` base class)
-* `chrono::duration`: `strong_ordering`, heterogeneous with durations of other representations and periods
-* `chrono::time_point`: `strong_ordering`, heterogeneous in the duration
-* `type_index`: `strong_ordering`
-* `filesystem::path`: `strong_ordering`
-* `filesystem::path::iterator`: `strong_ordering`
-* `filesystem::directory_entry`: `strong_ordering`
-* `filesystem::directory_iterator`: `strong_ordering`
-* `filesystem::recursive_directory_iterator`: `strong_ordering`
-* `thread::id`: `strong_ordering`
-* `array::iterator`: `strong_ordering`
-* `deque::iterator`: `strong_ordering`
-* `vector::iterator`: `strong_ordering`
-* `valarray::iterator`: `strong_ordering`
+* `error_category`
+* `error_code`
+* `error_condition`
+* `exception_ptr`
+* `monostate`
+* `chrono::duration`: heterogeneous with durations of other representations and periods
+* `chrono::time_point`: heterogeneous in the duration
+* `type_index`
+* `filesystem::path`
+* `filesystem::directory_entry`
+* `thread::id`
+* `array::iterator`
+* `deque::iterator`
+* `vector::iterator`
+* `valarray::iterator`
 
 ## Types that will get their `operator<=>` from a conversion operator
 
