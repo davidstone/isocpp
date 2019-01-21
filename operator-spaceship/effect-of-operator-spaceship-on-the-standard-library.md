@@ -156,6 +156,86 @@ These types are not comparable now. This paper does not propose adding any new c
 * `fpos_t`
 * `mbstate_t`
 
+### Types that have only `==` and `!=`, and thus do not require `<=>`
+
+* `type_info`
+* `bitset` (paper would be needed to change this to `strong_ordering`)
+* `allocator`
+* `memory_resource`
+* `synchronized_pool_resource`: (implicitly from `memory_resource` base class)
+* `unsynchronized_pool_resource`: (implicitly from `memory_resource` base class)
+* `monotonic_buffer_resource`: (implicitly from `memory_resource` base class)
+* `polymorphic_allocator`
+* `scoped_allocator_adaptor`
+* `function` with `nullptr_t` only (no homogenous operator)
+* `locale`
+* `complex` (heterogeneous with `T` and homogeneous)
+* `linear_congruential_engine`
+* `mersenne_twister_engine`
+* `subtract_with_carry_engine`
+* `discard_block_engine`
+* `independent_bits_engine`
+* `shuffle_order_engine`
+* `uniform_int_distribution`
+* `uniform_int_distribution::param_type`
+* `uniform_real_distribution`
+* `uniform_real_distribution::param_type`
+* `bernoulli_distribution`
+* `bernoulli_distribution::param_type`
+* `binomial_distribution`
+* `binomial_distribution::param_type`
+* `geometric_distribution`
+* `geometric_distribution::param_type`
+* `negative_binomial_distribution`
+* `negative_binomial_distribution::param_type`
+* `poisson_distribution`
+* `poisson_distribution::param_type`
+* `exponential_distribution`
+* `exponential_distribution::param_type`
+* `gamma_distribution`
+* `gamma_distribution::param_type`
+* `weibull_distribution`
+* `weibull_distribution::param_type`
+* `extreme_value_distribution`
+* `extreme_value_distribution::param_type`
+* `normal_distribution`
+* `normal_distribution::param_type`
+* `lognormal_distribution`
+* `lognormal_distribution::param_type`
+* `chi_squared_distribution`
+* `chi_squared_distribution::param_type`
+* `cauchy_distribution`
+* `cauchy_distribution::param_type`
+* `fisher_f_distribution`
+* `fisher_f_distribution::param_type`
+* `student_t_distribution`
+* `student_t_distribution::param_type`
+* `discrete_distribution`
+* `discrete_distribution::param_type`
+* `piecewsie_constant_distribution`
+* `piecewsie_constant_distribution::param_type`
+* `piecewise_linear_distribution`
+* `piecewise_linear_distribution::param_type`
+* `istream_iterator`
+* `istreambuf_iterator`
+* `filesystem::path::iterator`
+* `filesystem::directory_iterator`
+* `filesystem::recursive_directory_iterator`
+* `match_results`
+* `regex_iterator`
+* `regex_token_iterator`
+* `fpos`
+* `forward_list::iterator`
+* `list::iterator`
+* `map::iterator`
+* `set::iterator`
+* `multimap::iterator`
+* `multiset::iterator`
+* `unordered_map::iterator`
+* `unodered_set::iterator`
+* `unordered_multimap::iterator`
+* `unodered_multiset::iterator`
+
 
 ## Types that should get `operator<=>`, no change from current comparisons
 
@@ -165,94 +245,22 @@ These types are all currently comparable.
 * `error_code`: `strong_ordering`
 * `error_condition`: `strong_ordering`
 * `exception_ptr`: `strong_ordering`
-* `type_info`: `strong_equality`
 * `monostate`: `strong_ordering`
-* `bitset`: `strong_equality` (paper would be needed to change this to `strong_ordering`)
-* `allocator`: `strong_equality`
-* `memory_resource`: `strong_equality`
 * `synchronized_pool_resource`: (implicitly from `memory_resource` base class)
 * `unsynchronized_pool_resource`: (implicitly from `memory_resource` base class)
 * `monotonic_buffer_resource`: (implicitly from `memory_resource` base class)
-* `polymorphic_allocator`: `strong_equality`
-* `scoped_allocator_adaptor`: `strong_equality`
-* `pool_options`: `strong_equality`
-* `function`: `strong_equality` with `nullptr_t` only (no homogenous operator)
 * `chrono::duration`: `strong_ordering`, heterogeneous with durations of other representations and periods
 * `chrono::time_point`: `strong_ordering`, heterogeneous in the duration
 * `type_index`: `strong_ordering`
-* `locale`: `strong_equality`
-* `complex`: `strong_equality` (heterogeneous with `T` and homogeneous)
-* `linear_congruential_engine`: `strong_equality`
-* `mersenne_twister_engine`: `strong_equality`
-* `subtract_with_carry_engine`: `strong_equality`
-* `discard_block_engine`: `strong_equality`
-* `independent_bits_engine`: `strong_equality`
-* `shuffle_order_engine`: `strong_equality`
-* `uniform_int_distribution`: `strong_equality`
-* `uniform_int_distribution::param_type`: `strong_equality`
-* `uniform_real_distribution`: `strong_equality`
-* `uniform_real_distribution::param_type`: `strong_equality`
-* `bernoulli_distribution`: `strong_equality`
-* `bernoulli_distribution::param_type`: `strong_equality`
-* `binomial_distribution`: `strong_equality`
-* `binomial_distribution::param_type`: `strong_equality`
-* `geometric_distribution`: `strong_equality`
-* `geometric_distribution::param_type`: `strong_equality`
-* `negative_binomial_distribution`: `strong_equality`
-* `negative_binomial_distribution::param_type`: `strong_equality`
-* `poisson_distribution`: `strong_equality`
-* `poisson_distribution::param_type`: `strong_equality`
-* `exponential_distribution`: `strong_equality`
-* `exponential_distribution::param_type`: `strong_equality`
-* `gamma_distribution`: `strong_equality`
-* `gamma_distribution::param_type`: `strong_equality`
-* `weibull_distribution`: `strong_equality`
-* `weibull_distribution::param_type`: `strong_equality`
-* `extreme_value_distribution`: `strong_equality`
-* `extreme_value_distribution::param_type`: `strong_equality`
-* `normal_distribution`: `strong_equality`
-* `normal_distribution::param_type`: `strong_equality`
-* `lognormal_distribution`: `strong_equality`
-* `lognormal_distribution::param_type`: `strong_equality`
-* `chi_squared_distribution`: `strong_equality`
-* `chi_squared_distribution::param_type`: `strong_equality`
-* `cauchy_distribution`: `strong_equality`
-* `cauchy_distribution::param_type`: `strong_equality`
-* `fisher_f_distribution`: `strong_equality`
-* `fisher_f_distribution::param_type`: `strong_equality`
-* `student_t_distribution`: `strong_equality`
-* `student_t_distribution::param_type`: `strong_equality`
-* `discrete_distribution`: `strong_equality`
-* `discrete_distribution::param_type`: `strong_equality`
-* `piecewsie_constant_distribution`: `strong_equality`
-* `piecewsie_constant_distribution::param_type`: `strong_equality`
-* `piecewise_linear_distribution`: `strong_equality`
-* `piecewise_linear_distribution::param_type`: `strong_equality`
 * `filesystem::path`: `strong_ordering`
 * `filesystem::path::iterator`: `strong_ordering`
 * `filesystem::directory_entry`: `strong_ordering`
 * `filesystem::directory_iterator`: `strong_ordering`
 * `filesystem::recursive_directory_iterator`: `strong_ordering`
-* `istream_iterator`: `strong_equality`
-* `istreambuf_iterator`: `strong_equality`
-* `match_results`: `strong_equality`
-* `regex_iterator`: `strong_equality`
-* `regex_token_iterator`: `strong_equality`
 * `thread::id`: `strong_ordering`
-* `fpos`: `strong_equality`
 * `array::iterator`: `strong_ordering`
 * `deque::iterator`: `strong_ordering`
-* `forward_list::iterator`: `strong_equality`
-* `list::iterator`: `strong_equality`
 * `vector::iterator`: `strong_ordering`
-* `map::iterator`: `strong_equality`
-* `set::iterator`: `strong_equality`
-* `multimap::iterator`: `strong_equality`
-* `multiset::iterator`: `strong_equality`
-* `unordered_map::iterator`: `strong_equality`
-* `unodered_set::iterator`: `strong_equality`
-* `unordered_multimap::iterator`: `strong_equality`
-* `unodered_multiset::iterator`: `strong_equality`
 * `valarray::iterator`: `strong_ordering`
 
 ## Types that will get their `operator<=>` from a conversion operator
