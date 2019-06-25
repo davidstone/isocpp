@@ -15,7 +15,7 @@ With this proposal, the following code would be valid:
 
 The parameter is usable in all the same ways as any `constexpr` variable.
 
-Moreover, this paper proposes the introduction of a "maybe constexpr" qualifier, with a proposed syntax of `constexpr?` (this syntax should be seen as a placeholder if a better syntax is suggested). Such a function can accept values that are or are not `constexpr` and maintain that status when passed on to another function. In other words, this is a way to deduce and forward `constexpr`, similar to what "forwarding references" / "universal references" (`T &&`) do in function templates today. This paper proposes adding generally usable functionality to test whether an expression is a constant expression (`is_constexpr`), with the primary use case being to use this test in an `if constexpr` branch in such a function to add in a compile-time-only check.
+Moreover, this paper proposes the introduction of a "maybe constexpr" qualifier, with a strawman syntax of `constexpr?` (this syntax is a placeholder for most of the paper, there is a section on syntax later on). Such a function can accept values that are or are not `constexpr` and maintain that status when passed on to another function. In other words, this is a way to deduce and forward `constexpr`, similar to what "forwarding references" / "universal references" (`T &&`) do in function templates today. This paper proposes adding generally usable functionality to test whether an expression is a constant expression (`is_constexpr`), with the primary use case being to use this test in an `if constexpr` branch in such a function to add in a compile-time-only check.
 
 Finally, this paper proposes allowing overloading on `constexpr` parameters. Whether a parameter is `constexpr` would be used as the final step in function overload resolution to resolve cases that would otherwise be ambiguous. Put another way, we first perform overload resolution on type, then on `constexpr`.
 
@@ -469,6 +469,19 @@ This proosal introduces the concept of "hygienic macros"
 
 It supports evaluating exactly once or 0-N times. It proposes allowing constexpr parameters, but just to the parametric expressions. Parametric expressions can solve only the problems that do not require overloading, but it creates yet another shadow world.
 
+## Syntax
+
+There are two language-level features being proposed by this paper: allowing function parameters to be annotated in some way to allow them to be used at compile time within the function and require initialization from a constant expression, and allowing function parameters to be annotated in some way to allow them to be used at compile time if they are initialized with a constant expression. This section will discuss the syntax for those two features.
+
+### Option 1
+
+There is currently an inconsistency in the meaning of `constexpr`. On a variable declaration, it means "must be evaluated at compile time", but on a function declaration, it means "can be evaluated at compile time if it does stuff that can be done at compile time". We recently added a new keyword, `consteval`, that can be applied to only function declarations and it means "must be evaluated at compile time". We could take this as an opportunity to remove this inconsistency. This option would expand the keyword `consteval` to be used on variable declarations with the same meaning that `constexpr` has today. `constexpr` on a function declaration would retain its current meaning, but `constexpr` on a variable declaration would mean that the variable can be used in a constant expression context if it was initialized with a constant expression. The suggested meaning of the keywords would be that `consteval` means the thing is evaluated at compile time and `constexpr` means the thing is evaluated at compile time if the expression it uses can be evaluated at compile time.
+
+This has the advantage of removing an existing inconsistency in the meaning of the `constexpr ` keyword. It is also a backward-compatible change. It has the downside that the intent of users writing `constexpr` today could be to require a diagnostic if code ever changes that does not provide a compile-time constant. The other issue is that one of the design goals of `consteval` is that the compiler does not need to emit certain information, which would imply that `consteval` on a variable would produce something more like a template parameter: that interpretation of `consteval` would give a name to a prvalue, not an object with identity.
+
+### Option 2
+
+We keep things as they are today with regards to the meaning of `constexpr` and `consteval`. We allow annotating a function parameter with `constexpr` with the sdame meaning as a variable declaration: must be initialized with a constant expression. We add a new keyword, `maybe_constexpr`, that deduces whether the parameter is known at compile time. This paper originally proposed the syntax `constexpr?`. `consteval` was originally spelled as `constexpr!`, but `constexpr!` was rejected in favor of `consteval` for a variety of reasons, some of which also apply to `constexpr?`. One of the primary objections to names with punctuation is the question of how you pronounce the keyword. It would make spoken C++ be a tonal language, or else people will come up with a different name, such as "maybe constexpr". If people will come up with a different name for the keyword, we might as well name the keyword that name, thus `maybe_constexpr`.
 
 ## Further work needed
 
