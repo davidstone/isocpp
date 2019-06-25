@@ -476,4 +476,4 @@ References and pointers declared `constexpr` or in template parameters currently
 
 	constexpr int const & x = 42;
 
-The answer is: it depends. If `x` is a global variable, yes. If `x` is a local variable, no. If you add in `static`, then it becomes valid again. Cleaning this up will be the topic of another paper.
+The answer is: it depends. If `x` is a global variable, yes. If `x` is a local variable, no. If you add in `static` (any of the meanings), then it becomes valid again. Cleaning this up will be the topic of another paper.
