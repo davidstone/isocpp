@@ -313,7 +313,7 @@ What is this program guaranteed to print? The "secretly a template" model says i
 		static_assert(x == n);
 	}
 
-Is this `static_assert` guaranteed to succeed? With the regular function model, this function would not be guaranteed to succeed, because the first invokation of the function determines the value of `x`. However, there is no fixed ordering of `first` at compile time, especially considering that the function can be called from two different translation units with two different arguments. This suggests that it is not workable to have static constexpr variables of dependent value in such functions. We run into the same problems with static variables of dependent type.
+Is this `static_assert` guaranteed to succeed? With the regular function model, this function would not be guaranteed to succeed, because the first invokation of the function determines the value of `x`. However, there is no fixed ordering of "first" at compile time, especially considering that the function can be called from two different translation units with two different arguments. This suggests that it is not workable to have static constexpr variables of dependent value in such functions. We run into the same problems with static variables of dependent type.
 
 	void f(constexpr int n) {
 		using T = std::conditional_t<n == 0, int, long>;
