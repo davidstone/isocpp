@@ -271,7 +271,7 @@ The [Boost.MPL](https://www.boost.org/doc/libs/1_67_0/libs/mpl/doc/index.html) l
 
 ### Class Types in Non-Type Template Parameters
 
-A feature has been added to C++20 that allows class types as non-type template parameters. To use such a type, it must be a literal type with a defaulted `operator==`, with all bases and data members meeting the same requirement.
+A feature has been added to C++20 that allows class types as non-type template parameters. To use such a type, it must be a literal type with a defaulted `operator==`, with all bases and data members meeting the same requirement ("strong structural equality").
 
 ## Why we need this proposal
 
