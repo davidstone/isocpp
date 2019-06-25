@@ -367,7 +367,7 @@ Here, we have a `constexpr` variable as the source, but the only viable candidat
 
 #### Overload resolution
 
-Overload resolution is a bit more complicated, but once again has a fairly simple intuitive backing. The general idea is that `constexpr` is used only as a tie-breaker for otherwise ambiguous overloads.
+Overload resolution is a bit more complicated, but once again has a fairly simple intuitive backing. The general idea is that `constexpr` is used only as a tie-breaker for otherwise ambiguous overloads. [Note: this section is still in progress and may change]
 
 	void f0(int); // 1
 	void f0(constexpr long); // 2
