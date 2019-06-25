@@ -290,7 +290,7 @@ This paper proposes allowing a `constexpr` parameter anywhere that any other `co
 
 	void f(constexpr int X, std::array<int, X> const & a)
 		noexcept(X > 5)
-		requires X % 2 == 0
+		requires(X % 2 == 0)
 	{
 		static_assert(X == 6);
 	}
