@@ -441,15 +441,34 @@ We also have `std::get` baked into the language in the form of structured bindin
 
 ## Related work
 
-Daveed's [constexpr operator](http://www.open-std.org/jtc1/sc22/wg21/docs/papers/2017/p0595r0.html) allows the user to test whether the current evaluation is in a constexpr context, so the user could say `if constexpr (constexpr()) {} else {}`. This solves some of the problems addressed by this paper, but not all. Consider an alternative universe where we want to restrict memory orders to be compile-time constants, rather than the current state where they could be run-time values. With constexpr parameters, the solution is straightforward:
+It is recommended to go through the list of examples at the beginning and think about how they could be implemented using any of the features listed below. Some of the examples can be implemented in a way that is just as straightforward, but most of them cannot be implemented at all with any other proposed feature. The following features are commonly compared to constexpr function parameters.
+
+### `std::is_constant_evaluated()`
+
+`std::is_constant_evaluated()` allows the user to test whether the current evaluation is in a context that requires constant evaluation, so the user could say `if (is_constant_evaluated()) {} else {}`. This solves only some of the problems addressed by this paper. The general issue is that `std::is_constant_evaluated()` is testing how the expression is used, but `constexpr` function parameters are all about what data is provided. To clarify the difference, consider an alternative universe where we want to restrict memory orders to be compile-time constants, rather than the current state where they could be run-time values. With constexpr parameters, the solution is straightforward:
 
 	void atomic<T>::store(T desired, constexpr std::memory_order order = std::memory_order_seq_cst) noexcept;
 
-This would require the user to pass the memory order as a compile-time constant, but places no constraints on the overall execution being constexpr (and in fact, we know it never will be because atomic is not a literal type). It is not possible to implement this with a constexpr block. In general, this applies to any situation where you currently have a function accepting a function parameter and a template parameter (or a regular function parameter and a function parameter wrapped in something like `std::integral_constant`). For a perhaps more compelling example, this is how we would have originally designed tuple had we had constexpr parameters:
+This would require the user to pass the memory order as a compile-time constant, but places no constraints on the overall execution being constexpr (and in fact, we know it never will be because atomic is not a literal type). It is not possible to implement this with `std::is_constant_evaluated()`. For a perhaps more compelling example, this is how we likely would have originally designed tuple if we had constexpr parameters:
 
 	constexpr auto && tuple::operator[](constexpr std::size_t index) { ... }
 
-where the tuple variable (`*this`) is (potentially) a run time value. In other words, the code using the index is mixed in with the code using the tuple. The `constexpr()` operator allows you to write different code depending on whether the entire evaluation is part of a constexpr context. `constexpr` parameters allows you to partially apply certain arguments at compile time without needing to compute the entire expression at compile time.
+where the tuple variable (`*this`) is (potentially) a run time value. In other words, the code using the index is mixed in with the code using the tuple. `std::is_constant_evaluated()` allows you to write different code depending on whether the entire evaluation is part of a constexpr context. `constexpr` parameters allows you to partially apply certain arguments at compile time without needing to compute the entire expression at compile time.
+
+Another important difference is that `if constexpr (std::is_constant_evaluated())` is meaningless: `if constexpr` is a context that requires a constant expression, and thus `std::is_constant_evaluated()` will always return true. Many of the examples rely on being able to, for instance, return different types or write code in different branches that would not compile if the value is not a constant expression.
+
+### `consteval`
+
+This has many of the same problems as `std::is_constant_evaluated()`. It also does not provide a way to overload on `constexpr` vs. not.
+
+### Parametric expressions: [P1121](http://wg21.link/p1121)
+
+This proosal introduces the concept of "hygienic macros"
+
+	using add(auto a, auto b) { return a + b; }
+
+It supports evaluating exactly once or 0-N times. It proposes allowing constexpr parameters, but just to the parametric expressions. Parametric expressions can solve only the problems that do not require overloading, but it creates yet another shadow world.
+
 
 ## Further work needed
 
