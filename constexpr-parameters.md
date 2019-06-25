@@ -271,7 +271,7 @@ The [Boost.MPL](https://www.boost.org/doc/libs/1_67_0/libs/mpl/doc/index.html) l
 
 ### Class Types in Non-Type Template Parameters
 
-[P0732R1](http://www.open-std.org/jtc1/sc22/wg21/docs/papers/2018/p0732r1.pdf): current proposal making its way through the committee. From the paper: "We should allow non-union class types to appear in non-type template parameters. Require that types used as such, and all of their bases and non-static data members recursively, have a non-user-provided `operator<=>` returning a type that is implicitly convertible to std::strong_equality, and contain no references." This paper will refer to such types as having a "trivial `operator<=>`".
+A feature has been added to C++20 that allows class types as non-type template parameters. To use such a type, it must be a literal type with a defaulted `operator==`, with all bases and data members meeting the same requirement.
 
 ## Why we need this proposal
 
