@@ -15,7 +15,7 @@ With this proposal, the following code would be valid:
 
 The parameter is usable in all the same ways as any `constexpr` variable.
 
-Moreover, this paper proposes the introduction of a "maybe constexpr" qualifier, with a strawman syntax of `constexpr?` (this syntax is a placeholder for most of the paper, there is a section on syntax later on). Such a function can accept values that are or are not `constexpr` and maintain that status when passed on to another function. In other words, this is a way to deduce and forward `constexpr`, similar to what "forwarding references" / "universal references" (`T &&`) do in function templates today. This paper proposes adding generally usable functionality to test whether an expression is a constant expression (`is_constexpr`), with the primary use case being to use this test in an `if constexpr` branch in such a function to add in a compile-time-only check.
+Moreover, this paper proposes the introduction of a "maybe constexpr" qualifier, with a strawman syntax of `constexpr?` (this syntax is a placeholder for most of the paper, there is a section on syntax later on). Such a function can accept values that are or are not `constexpr` and maintain that status when passed on to another function. In other words, this is a way to deduce and forward `constexpr`, similar to what "forwarding references" / "universal references" (`T &&`) do in function templates today. This paper proposes adding generally usable functionality to test whether an expression is a constant expression (`is_constant_expression`), with the primary use case being to use this test in an `if constexpr` branch in such a function to add in a compile-time-only check.
 
 Finally, this paper proposes allowing overloading on `constexpr` parameters. Whether a parameter is `constexpr` would be used as the final step in function overload resolution to resolve cases that would otherwise be ambiguous. Put another way, we first perform overload resolution on type, then on `constexpr`.
 
@@ -414,7 +414,7 @@ It would be nice to be able to write a function template that accepts parameters
 Option 3 seems like the best option, but requires some more explanation for how it would work. There are two primary use cases for this functionality. The first use case is to forward an argument to another function that has a `constexpr?` parameter or is overloaded on `constexpr`. The second use case is to write a single function that has one small bit of code that is run only at compile time or only at run time. For instance, `std::array::operator[]` could be implemented like this:
 
 	auto & operator[](constexpr? size_t index) {
-		if constexpr(is_constexpr(index)) {
+		if constexpr(is_constant_expression(index)) {
 			static_assert(index < size());
 		}
 		return __data[index];
@@ -422,20 +422,20 @@ Option 3 seems like the best option, but requires some more explanation for how 
 
 Here, we put in a compile-time check where possible, but otherwise the behavior is the same. I actually expect this to be the primary way to use `constexpr` parameters when overloading with run-time parameters, as it ensures there are no accidental differences in the definition.
 
-Here we show a sample implementation of `is_constexpr`, defined as a macro, which is possible to write in standard C++ with the introduction of this paper:
+Here we show a sample implementation of `is_constant_expression`, defined as a macro, which is possible to write in standard C++ with the introduction of this paper:
 
-	std::true_type is_constexpr_impl(constexpr int);
-	std::false_type is_constexpr_impl(int);
+	std::true_type is_constant_expression_impl(constexpr int);
+	std::false_type is_constant_expression_impl(int);
 	
-	#define is_constexpr(...) \
-		decltype(is_constexpr_impl( \
+	#define is_constant_expression(...) \
+		decltype(is_constant_expression_impl( \
 			(void(__VA_ARGS__), 0) \
 		))::value
 
 This must be a macro so that it does not evaluate the expression and perform side effects. We need to make it unevaluated, and the macro wraps that logic. I believe it shows the strength of this solution that users can use it to portably detect whether an expression is constexpr (a common user request for a feature), rather than needing that as a built-in language feature. If we had lazy function parameters, the implementation would be even more straightforward:
 
-	constexpr bool is_constexpr(constexpr int) { return true; }
-	constexpr bool is_constexpr(~LAZY~ int) { return false; }
+	constexpr bool is_constant_expression(constexpr int) { return true; }
+	constexpr bool is_constant_expression(~LAZY~ int) { return false; }
 
 Regardless of how the feature is specified, it is an essential component of this proposal.
 
