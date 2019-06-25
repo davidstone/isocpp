@@ -330,7 +330,15 @@ The definition of "dependent type" ends up applying to any locally defined type.
 		} s;
 	}
 
-The problem here is that if we ever commit to one model of static variables, it is a breaking change to switch to the other. So we could restrict static variables to not have a type or value dependent on any constexpr function parameter, and then the "regular function" model works, but we would have to commit ourselves to that model going forward. The only two reasonable approaches here are to do what templates do (where a given value of a constexpr function parameter gives you the same instance of static variables, but different values give you different instances) or we simply ban the use of static variables in such functions. This paper argues for not allowing static variables at this time, pending further research into this area.
+This may not seem like a very common problem (locally defined structs are uncommon in most code bases), but we do have one common example of local types:
+
+	auto f(constexpr int n) {
+		return [] { return n; };
+	}
+
+Lambdas create a unique type (and here we must create a unique type for the code to make any sense). If we want to not close off any options and wait for a solution (which may not exist) that can match the semantics of a regular function, we would have to not allow static variables, lambdas, or local class definitions. This paper argues that these restrictions are too severe, and thus the only workable model is the model in which these functions behave as templates.
+
+To translate into template terms, using a `constexpr` function parameter creates a new template instantiation for each distinct value. Using a `constexpr?` function parameter creates a new template instantiation for each distinct constant expression value, plus a single instantiation for all run-time values.
 
 ### Overload resolution
 
@@ -385,7 +393,7 @@ The complications arise when considering overloads differing only by value categ
 	
 ### What are the restrictions on types that can be used as `constexpr` parameters?
 
-There are two possible options here. Conceptually, we would like to be able to use any literal type as a `constexpr` parameter. This gives us the most flexibility and feels most like a complete feature. Again, however, the obvious implementation strategy for this paper would be to reuse the machinery that handles templates now: internally treat `void f(constexpr int x)` much like `template<int x> void f()`. In the "template" model, we would limit `constexpr` parameters to be types which can be passed as template parameters: with P0732, types with a trivial `operator<=>`. For functions with `constexpr` parameters, however, many of the concerns that prompted that requirement go away under the "regular function" model. The importance of "same instantiation" is limited thanks to not trying to conceptually "instantiate" this into a "regular" function. Because we do not propose allowing the formation of pointers to such functions and because we propose not allowing static variables, the problem is avoided entirely. We do not need to decide whether two functions with different `constexpr` variables are "the same" function because there is no way to determine the answer. The only remaining question here comes down to implementability concerns.
+There are two possible options here. Conceptually, we would like to be able to use any literal type as a `constexpr` parameter. This gives us the most flexibility and feels most like a complete feature. Again, however, the obvious implementation strategy for this paper would be to reuse the machinery that handles templates now: internally treat `void f(constexpr int x)` much like `template<int x> void f()`. In the "template" model, we would limit `constexpr` parameters to be types which can be passed as template parameters: strong structural equality. This paper proposes following the lead of non-type template parameters.
 
 ### Can you take the address of `constexpr` parameter?
 
