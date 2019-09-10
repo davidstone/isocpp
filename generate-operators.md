@@ -477,6 +477,8 @@ These have only compound assignment operators.
 - `common_iterator`
 - `counted_iterator`
 
+Regardless of what happens with this proposal, these types sometimes return their own type and call the wrapped type's prefix `operator++`, and returns the result of calling the wrapped type's postfix `operator++`. This is an inconsistent design that probably deserves further discussion.
+
 #### Types that return a reference from postfix `++`
 
 - `ostream_iterator`
