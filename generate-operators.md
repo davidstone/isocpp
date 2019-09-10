@@ -395,7 +395,7 @@ These have only compound assignment operators.
 - `array::iterator`
 - `deque::iterator`
 - `vector::iterator`
-- `forward_list::iterator`
+- `forward_list::iterator` (`++` only)
 - `list::iterator`
 - `map::iterator`
 - `set::iterator`
