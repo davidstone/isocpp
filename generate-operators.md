@@ -242,7 +242,7 @@ To summarize, it is better for llvm and ICC to define `+` as the basis operation
 
 ### Recommendation
 
-We should synthesize compound assignment operators following the same rules as we follow for `operator<=>`: the overload set for the compound assignment operators include a synthesized operator, which is considered a worse match than a non-synthesized operator. In other words, `lhs @= rhs` has a candidate overload of `lhs = std::move(lhs) @ rhs`. Users can explicitly opt in to using such an operator rewrite by specifying `= default`. This is entirely for symmetry, as it is not useful, just like `bool operator!=(T, T) = default;` is not useful. They can opt out by using `= delete`. This proposal would synthesize rewrite rules for the following operators:
+We should synthesize compound assignment operators following the same rules as we follow for `operator<=>`: the overload set for the compound assignment operators include a synthesized operator, which is considered a worse match than a non-synthesized operator. In other words, `lhs @= rhs` has a candidate overload of `lhs = std::move(lhs) @ rhs`. Users can explicitly opt in to using such an operator rewrite by specifying `= default`. This is entirely for symmetry, as it is not especially useful, just like `bool operator!=(T, T) = default;` is not especially useful. They can opt out by using `= delete`. This section of the proposal would synthesize rewrite rules for the following operators:
 
 - `operator+=`
 - `operator-=`
