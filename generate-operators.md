@@ -458,7 +458,7 @@ These have only compound assignment operators.
 - `regex_iterator` (`++` only)
 - `regex_token_iterator` (`++` only)
 
-#### Types that have the operator now and it behaves the same as the synthesized operator only if postfix does work for non-copyable types (weird only for postfix `++`)
+#### Types that have the operator now and it behaves the same as the synthesized operator only if postfix returns `void` for non-copyable types
 
 - `move_iterator`
 - `iota_view::iterator`
@@ -470,7 +470,7 @@ These have only compound assignment operators.
 - `basic_istream_view::iterator`
 - `elements_view::iterator`
 
-Regardless of what happens with this proposal, these types sometimes return their own type, and sometimes return whatever the wrapped type returns. This is a strange design.
+`basic_istream_view` always returns `void` from its postfix `operator++`. The others wrap another iterator type and always call the prefix `operator++` or `operator--` (where applicable) on the wrapped type. If the type they are wrapping does not meet `forward_iterator` (it is an `input_iterator` only), then they return `void` from their postfix `operator++` (`input_iterator` does not support `operator--` so it does not get special treatment), otherwise they return `*this` by reference.
 
 #### Types that defer to a wrapped postfix `++` for iterators that do not meet `forward_iterator`
 
