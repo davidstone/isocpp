@@ -362,6 +362,44 @@ These have only compound assignment operators.
 - `deque::iterator`
 - `vector::iterator`
 - `valarray::iterator`
+- `atomic<integral>` and `atomic<pointer>`
+- `atomic_ref<integral>` and `atomic_ref<pointer>`
+
+#### Types that have the operator now but do not or might not have `+=` or `-=` (no change from this proposal)
+
+- `forward_list::iterator` (`++` only)
+- `list::iterator`
+- `map::iterator`
+- `set::iterator`
+- `multimap::iterator`
+- `multiset::iterator`
+- `unordered_map::iterator`
+- `unodered_set::iterator`
+- `unordered_multimap::iterator`
+- `unodered_multiset::iterator`
+- `back_insert_iterator` (`++` only)
+- `front_insert_iterator` (`++` only)
+- `insert_iterator` (`++` only)
+- `reverse_iterator`
+- `move_iterator`
+- `common_iterator`
+- `counted_iterator`
+- `istream_iterator` (`++` only)
+- `ostream_iterator` (`++` only)
+- `istreambuf_iterator` (`++` only)
+- `ostreambuf_iterator` (`++` only)
+- `iota_view::iterator`
+- `filter_view::iterator`
+- `transform_view::iterator`
+- `join_view::iterator` (`++` only)
+- `split_view::outer_iterator` (`++` only)
+- `split_view::inner_iterator` (`++` only)
+- `basic_istream_view::iterator` (`++` only)
+- `elements_view::iterator`
+- `directory_iterator` (`++` only)
+- `recursive_directory_iterator` (`++` only)
+- `regex_iterator` (`++` only)
+- `regex_token_iterator` (`++` only)
 
 #### Needs to keep existing version because the rewrite would not compile
 
@@ -419,7 +457,6 @@ These have only compound assignment operators.
 - `chrono::weekday`
 - `regex_iterator` (`++` only)
 - `regex_token_iterator` (`++` only)
--
 
 #### Types that have the operator now and it behaves the same as the synthesized operator only if postfix does work for non-copyable types (weird only for postfix `++`)
 
