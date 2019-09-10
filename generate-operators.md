@@ -329,7 +329,7 @@ All of these types have an `operator+` that calls some underlying type's `operat
 
 For `chrono::duration`, the standard states that its template parameter "`Rep` shall be an arithmetic type or a class emulating an arithmetic type". It is unclear how true this emulation must be, but presumably it requires that arithmetic operations have the usual equivalences, in which case it should not matter which specific operators are called.
 
-#### Types that mysteriously do not have `a + b` but do have `a += b`
+#### Types that mysteriously do not have `a + b` but do have `a += b`, even though they have `a / b` and `a /= b`
 
 - `filesystem::path`
 
@@ -338,9 +338,9 @@ If we define `operator+` for this type, we could then get rid of `operator+=`. P
     std::list<char> range{0, 1, 2, 3, 4, 5};
     std::filesystem::path p = "101";
     std::regex(range.begin() + p);
-    // Note: The code is already valid if you replace `+` with `/`
+    // Note: This code is already valid if you replace `+` with `/`
 
-The default version of `operator/=` is correct for `filesystem::path`.
+The synthesized version of `operator/=` is correct for `filesystem::path`.
 
 #### Correctly unaffected types
 
