@@ -365,6 +365,8 @@ These have only compound assignment operators.
 
 #### Needs to keep existing version because the rewrite would not compile
 
+- `chrono::duration`
+- `chrono::time_point`
 - `chrono::day`
 - `chrono::month`
 - `chrono::year`
