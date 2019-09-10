@@ -294,11 +294,11 @@ Given the path we took for `operator<=>` of removing manual definitions of opera
 #### Types that can have all of their `operator@=` defaulted
 
 - `basic_string`: Can remove all `operator+=` except the overload taking `initializer_list` (or we could add `basic_string + initializer_list`)
-- `basic_string::iterator`
-- `array::iterator`
-- `deque::iterator`
-- `vector::iterator`
-- `valarray::iterator`
+- `basic_string::iterator`: `+=`, `-=`
+- `array::iterator`: `+=`, `-=`
+- `deque::iterator`: `+=`, `-=`
+- `vector::iterator`: `+=`, `-=`
+- `valarray::iterator`: `+=`, `-=`
 - `iota_view::iterator`: `+=`, `-=`
 - `elements_view::iterator`: `+=`, `-=`
 - `complex`: `+=`, `-=`, `*=`, `/=`
