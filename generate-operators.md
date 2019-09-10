@@ -331,9 +331,6 @@ All of these types have an `operator+` that calls some underlying type's `operat
 
 For `chrono::duration`, the standard states that its template parameter "`Rep` shall be an arithmetic type or a class emulating an arithmetic type". It is unclear how true this emulation must be, but presumably it requires that arithmetic operations have the usual equivalences, in which case it should not matter which specific operators are called.
 
-All of the compound assignment operators in the standard library could be removed with the exception of `std::atomic` (for which the synthesized versions
-would fail to compile). Some instances of prefix increment / decrement can be removed (all cases for which `value += 1` is valid).
-
 #### Types that mysteriously do not have `a + b` but do have `a += b`
 
 - `filesystem::path`
