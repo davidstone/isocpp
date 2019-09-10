@@ -279,7 +279,7 @@ Rewrite `lhs->rhs` as `(*lhs).rhs`.
 
 ## Pointer to member of pointer (`->*`)
 
-Same as `operator->`.
+Same reasoning as `operator->`.
 
 ### Recommendation
 
