@@ -294,6 +294,11 @@ Given the path we took for `operator<=>` of removing manual definitions of opera
 #### Types that can have all of their `operator@=` defaulted
 
 - `basic_string`: Can remove all `operator+=` except the overload taking `initializer_list` (or we could add `basic_string + initializer_list`)
+- `basic_string::iterator`
+- `array::iterator`
+- `deque::iterator`
+- `vector::iterator`
+- `valarray::iterator`
 - `iota_view::iterator`: `+=`, `-=`
 - `elements_view::iterator`: `+=`, `-=`
 - `complex`: `+=`, `-=`, `*=`, `/=`
@@ -355,6 +360,14 @@ These have only compound assignment operators.
 
 ### Prefix `operator++` and `operator--`
 
+#### Types that have the operator now and it behaves the same as the synthesized operator (`a += 1`)
+
+- `basic_string::iterator`
+- `array::iterator`
+- `deque::iterator`
+- `vector::iterator`
+- `valarray::iterator`
+
 #### Needs to keep existing version because the rewrite would not compile
 
 - `chrono::day`
@@ -381,6 +394,21 @@ These have only compound assignment operators.
 
 #### Types that have the operator now and it behaves the same as the synthesized operator even if postfix does not work for non-copyable types
 
+- `basic_string::iterator`
+- `array::iterator`
+- `deque::iterator`
+- `vector::iterator`
+- `forward_list::iterator`
+- `list::iterator`
+- `map::iterator`
+- `set::iterator`
+- `multimap::iterator`
+- `multiset::iterator`
+- `unordered_map::iterator`
+- `unodered_set::iterator`
+- `unordered_multimap::iterator`
+- `unodered_multiset::iterator`
+- `valarray::iterator`
 - `reverse_iterator`
 - `back_insert_iterator` (`++` only)
 - `front_insert_iterator` (`++` only)
