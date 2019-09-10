@@ -521,7 +521,7 @@ Most of these are iterators that return either by value or by `decltype(auto)` f
 - `front_insert_iterator`
 - `ostream_iterator`
 
-The insert iterators and `ostream_iterator` technically gain an `operator->`, but the only members of those types are types, constructors, and operators, none of which are accessible through `operator->` using the syntaxes that are supported to access the standard library.
+The insert iterators and `ostream_iterator` technically gain an `operator->`, but `operator*` returns a reference to `*this` and the only members of those types are types, constructors, and operators, none of which are accessible through `operator->` using the syntaxes that are supported to access the standard library.
 
 #### Types that will gain `operator->` and it is a bad thing
 
