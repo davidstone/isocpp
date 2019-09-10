@@ -484,11 +484,11 @@ Regardless of what happens with this proposal, these types sometimes return thei
 - `ostream_iterator`
 - `ostreambuf_iterator`
 
-#### Types that would do something bad with the synthesized version
+#### Types that would do something bad with the synthesized version and thus need to keep their existing overload
 
 - `istreambuf_iterator` has a postfix `operator++` that returns a proxy that keeps the old value alive
-- `directory_iterator` has no postfix, but it is a copyable `input_iterator`. It also has a member `increment()` that is the same as prefix `operator++` but accepts an `error_code` parameter.
-- `recursive_directory_iterator` has no postfix, is `input_iterator`, has `increment` member function that is prefix
+- `directory_iterator` has no postfix, but it is a copyable `input_iterator`.
+- `recursive_directory_iterator` has no postfix, but it is a copyable `input_iterator`
 
 #### Atomics
 
