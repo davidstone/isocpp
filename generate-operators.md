@@ -490,12 +490,12 @@ Regardless of what happens with this proposal, these types sometimes return thei
 - `directory_iterator` has no postfix, but it is a copyable `input_iterator`.
 - `recursive_directory_iterator` has no postfix, but it is a copyable `input_iterator`
 
-#### Atomics
+#### Types that would return less information than is currently returned and thus need to keep their existing overload
 
 - `atomic_ref`
 - `atomic`
 
-Prefix operators return a copy of the underlying value that exists after the increment. This matches the behavior of the rewrite rules `++x => x += 1` and `--x => x -= 1`, so the prefix operators are no longer needed (an implementation is free to provide such an overload if it can optimize it in some way). Postfix operators return a copy of the underlying value as it was before the increment. Under the language rules of this proposal, if the manual postfix operators were removed from `std::atomic`, the postfix operator would either not exist (because atomics are non-copyable) or they would return `void` instead. If the manual postfix operators were removed from `atomic_ref`, it would return a copy of the `atomic_ref` rather than the value.
+These overloads would need to stay. The postfix operators return a copy of the underlying value as it was before the increment. Under the language rules of this proposal, if the manual postfix operators were removed from `std::atomic`, the postfix operator would either not exist (because atomics are non-copyable) or they would return `void` instead (depending on how we resolve this issue). If the manual postfix operators were removed from `atomic_ref`, it would return a copy of the `atomic_ref` rather than the value.
 
 ### `operator->`
 
