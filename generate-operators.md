@@ -316,8 +316,6 @@ Given the path we took for `operator<=>` of removing manual definitions of opera
 - `byte`: `^=`, `&=`, `|=`, `<<=`, `>>=`
 - `bitset`: `^=`, `&=`, `|=`, `<<=`, `>>=`
 
-Non-normatively, we should probably change the `Cpp17RandomAccessIterator` requirements table to define the semantics of `a + b` and then rely on that to define `a += b`, rather than the other way around.
-
 #### Types that wrap another type and forward to its `+`, `+=`, `-`, and `-=`
 
 - `reverse_iterator`
