@@ -512,7 +512,7 @@ These overloads would need to stay. The postfix operators return a copy of the u
 - `basic_istream_view::iterator`
 - `elements_view::iterator`
 
-Most of these are iterators that return either by value or by `decltype(auto)` from some user-defined function. It is not possible to safely and consistently define `operator->` for these types, so we do not always do so.
+Most of these are iterators that return either by value or by `decltype(auto)` from some user-defined function. It is not possible to safely and consistently define `operator->` for these types, so we do not always do so, but under this proposal they would all do the right thing.
 
 #### Types that will technically gain `operator->` but it is not observable
 
