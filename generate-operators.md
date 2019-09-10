@@ -567,26 +567,20 @@ All types in this section have an `operator->` that is identical to the synthesi
 
 - `reverse_iterator`
 - `common_iterator`
-- `filter_view::iterator` (effectively)
-- `join_view::iterator` (effectively)
+- `filter_view::iterator` (effectively, it returns the iterator itself from `operator->`)
+- `join_view::iterator` (effectively, it returns the iterator itself from `operator->`)
 
-All of these types currently define their `operator->` as deferring to the base iterator's `operator->`. We could decide whether we want to maintain this behavior, in which case the function would not be considered a viable candidate for iterators that do not have `operator->`, and then it would be viable for the rewrite rule (because no `operator->` would be found), or we could change the behavior of these iterator types by unconditionally removing `operator->` from the specification. I have no preference between these two options as a result of this paper (the first approach changes behavior only for strange user-defined iterators that have `operator->` and `operator*` mean fundamentally different things). There seem to be three approaches here:
-
-1. Always wrap `operator->`: the user wrote a special `operator->` for a reason and we should respect that (use the synthesized operator only when the base iterator does not define `operator->`)
-2. Never wrap `operator->`: there should be a semantic link between `operator*` and `operator->` (use the synthesized operator always)
-3. Maintain wrapping behavior for types that existed in C++17, but change the new C++20 iterators to never explicitly call `a.operator->()` so that we leave our migration path open for most iterator types
-
-`common_iterator<Iterator, Sentinel>` conceptually holds a `std::variant<Iterator, Sentinel>`. `operator*` requires that the iterator is the active member and dereferences that. `operator->` calls `operator->` on the contained iterator if such a thing exists, otherwise it falls back on two methods of synthesizing it: the first is `addressof(operator*())` when the result of `operator*()` is a reference type, the other (for values) is to construct a proxy class that holds the value, and then return a pointer to that. This leads to more possibility for dangling references (for instance, `auto && extend_lifetime = it->value;` works under the language solution by fails under the proxy solution). At a minimum, this should be simplified to remove the last two fallbacks (as the language would do the right thing).
+All of these types currently define their `operator->` as deferring to the base iterator's `operator->`. However, the Cpp17InputIterator requirements specify that `a->m` is exactly equivalent to `(*a).m`, so anything a user passes to `reverse_iterator` must already meet this. The other three iterators are new in C++20 and require `input_or_output_iterator` of their parameter, which says nothing about `->`. This means that based on what we have promised about our interfaces, we could implement all of these under the language proposal if we change `common_iterator`, `filter_view::iterator`, and `join_view::iterator` for C++20.
 
 #### `iterator_traits`
 
 `std::iterator_traits<I>::pointer` is essentially defined as `typename I::pointer` if such a type exists, otherwise `decltype(a.operator->())` (where `a` is some value of type `I`) if that expression is well-formed, otherwise `void`. The type appears to be unspecified for iterators into any standard container, depending on how you read the requirements. The only relevant requirement on standard container iterators (anything that meets Cpp17InputIterator) are that `a->m` is equivalent to `(*a).m`. We never specify that any other form is supported, nor do we specify that any of them contain the member type `pointer`. There are three options here:
 
-1. Specify a further fallback of `decltype(std::addressof(*a))` to maintain current behavior and allow users to delete their own `operator->` without changing the results of `iterator_traits`
-2. Allow `pointer` to be defined as `void` for types that have a synthesized `operator->`
+1. Change nothing. This would make `pointer` defined as `void` for types that have a synthesized `operator->`
+2. Specify a further fallback of `decltype(std::addressof(*a))` to maintain current behavior and allow users to delete their own `operator->` without changing the results of `iterator_traits`
 3. Deprecate or remove the `pointer` typedef, as it is not used anywhere in the standard except to define other `pointer` typedefs and it seems to have very little usefulness outside the standard.
 
-Recommended to poll for this question. My recommendation is either 1 or 3.
+My recommendation is either 2 or 3.
 
 #### `to_address` and `pointer_traits`
 
@@ -610,6 +604,18 @@ However, none of them are specified to have member `to_address`.
 4. Decide that iterators that do not satisfy `contiguous_iterator` are not sufficiently "pointer like", and thus should not be used with `std::to_address`. This would require changing the definition for C++20. We would then say that calling `std::to_address` works for all `contiguous_iterator` types. This just pushes the question down the road a bit (we still have to decide how that works and how users opt in to this), but it dramatically reduces the number of types that would have to do this (in the standard, it would just be 6 types: `basic_string::iterator`, `basic_string_view::iterator`, `array::iterator`, `vector<non_bool>::iterator`, `span::iterator`, and `valarray::iterator`). If we go this route, we need to decide on option 1, 2, or 3 for those iterator types.
 
 1 and 2 feel like the wrong approach -- they would mean that authors of iterator types still need to define their own `operator->`, or they must specialize some class template (if we agree that the current semantics with regard to iterators are correct), or they must overload `to_address` and we make that a customization point found by ADL.
+
+## Summary of open questions
+
+Other than the first question (which is both language and library), all of these questions are library questions.
+
+- Should we synthesize a postfix `operator++` and `operator--` that return `void` for types that have the prefix version but are non-copyable? If not, should we remove such overloads from C++20 for the iterator adapter types mentioned in that section of this paper?
+- For iterator adaptors, `chrono::duration`, and `chrono::time_point`, they currently have their `operator@=` defer to some user-defined type's `operator@=`, but we appear to have text requiring that to be equivalent to `operator@`. Do we want to maintain this wrapping behavior for all of those types, none of those types, or make a change to C++20 for `transform_view::iterator` and `counted_iterator` to make them not wrap?
+- Should `complex` and `atomic<floating_point>` have `operator++` and `operator--`? They both support `a += 1` and their underlying type supports `++b`.
+- Should `ostream_iterator` and `ostreambuf_iterator` be changed to return by value from postfix `operator++`?
+- Should - `reverse_iterator`, `common_iterator`, `filter_view::iterator`, and `join_view::iterator` continue to call an underlying iterator type's `operator->` in their `operator->` if it exists? If not, should we remove such functionality from C++20 for `common_iterator`, `filter_view::iterator`, and `join_view::iterator` and define them as returning `addressof(**this)`? This would technically not be a breaking change because we never promised for `reverse_iterator` that the implementation isn't already doing what the language proposal suggests.
+- How should `iterator_traits<I>::pointer` be defined? a) Do nothing => get a `void` typedef for types that use the language feature. b) Specify a further fallback => `decltype(std::addressof(*a))`. c) Deprecate the typedef.
+- How should `std::to_address` be defined?
 
 ## Things with no recommendations to change
 
