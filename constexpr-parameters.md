@@ -1,9 +1,9 @@
 # `constexpr` Function Parameters
 
-Document Number: D1045R1
+<pre>Document Number: D1045R1
 Date: 2019-06-25
-Author: David Stone (&#x64;&#x61;&#x76;&#x69;&#x64;&#x40;&#x64;&#x6F;&#x75;&#x62;&#x6C;&#x65;&#x77;&#x69;&#x73;&#x65;&#x2E;&#x6E;&#x65;&#x74;, &#x64;&#x61;&#x76;&#x69;&#x64;&#x2E;&#x73;&#x74;&#x6F;&#x6E;&#x65;&#x40;&#x75;&#x62;&#x65;&#x72;&#x2E;&#x63;&#x6F;&#x6D;)
-Audience: Evolution Working Group (EWG)
+Author: David Stone (david.stone@uber.com, david@doublewise.net)
+Audience: Evolution Working Group (EWG)</pre>
 
 ## Abstract
 
