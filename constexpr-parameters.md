@@ -9,21 +9,23 @@ Audience: Evolution Working Group (EWG)</pre>
 
 With this proposal, the following code would be valid:
 
-	void f(constexpr int x) {
-		static_assert(x == 5);
-	}
+```
+void f(constexpr int x) {
+	static_assert(x == 5);
+}
+```
 
 The parameter is usable in all the same ways as any `constexpr` variable.
 
-Moreover, this paper proposes the introduction of a "maybe constexpr" qualifier, with a strawman syntax of `constexpr?` (this syntax is a placeholder for most of the paper, there is a section on syntax later on). Such a function can accept values that are or are not `constexpr` and maintain that status when passed on to another function. In other words, this is a way to deduce and forward `constexpr`, similar to what "forwarding references" / "universal references" (`T &&`) do in function templates today. This paper proposes adding generally usable functionality to test whether an expression is a constant expression (`is_constant_expression`), with the primary use case being to use this test in an `if constexpr` branch in such a function to add in a compile-time-only check.
+Moreover, this paper proposes the introduction of a "maybe constexpr" qualifier, with a strawman syntax of `👨‍🌾constexpr👨‍🌾` (this syntax is a placeholder for most of the paper, there is a section on syntax later on). Such a function can accept values that are or are not `constexpr` and maintain that status when passed on to another function. In other words, this is a way to deduce and forward `constexpr`, similar to what "forwarding references" / "universal references" (`T &&`) do in function templates today. This paper proposes adding generally usable functionality to test whether an expression is a constant expression (`is_constant_expression`), with the primary use case being to use this test in an `if constexpr` branch in such a function to add in a compile-time-only check.
 
 Finally, this paper proposes allowing overloading on `constexpr` parameters. Whether a parameter is `constexpr` would be used as the final step in function overload resolution to resolve cases that would otherwise be ambiguous. Put another way, we first perform overload resolution on type, then on `constexpr`.
 
 This paper has three primary design goals:
 
-1) Eliminate arcane metaprogramming from modern libraries by allowing them to make use of "regular" programming.
-2) Allow library authors to take advantage of known-at-compile-time values to improve the performance of their libraries
-3) Allow library authors to take advantage of known-at-compile-time values to improve the diagnostics of their libraries
+1. Eliminate arcane metaprogramming from modern libraries by allowing them to make use of "regular" programming.
+2. Allow library authors to take advantage of known-at-compile-time values to improve the performance of their libraries
+3. Allow library authors to take advantage of known-at-compile-time values to improve the diagnostics of their libraries
 
 ## Changes In This Revision
 
@@ -93,7 +95,7 @@ a[2] = 3; // undefined behavior
 auto t = std::tuple&lt;int, std::string&gt;{};
 std::get&lt;0&gt;(t) = 1;
 std::get&lt;1&gt;(t) = "asdf";
-std::get&lt;2&gt;(t) = 3;  // compile error</code></pre>
+std::get&lt;2&gt;(t) = 3; // compile error</code></pre>
 		</td>
 		<td>
 <pre><code>auto a = std::array&lt;int, 2&gt;{};
@@ -118,7 +120,7 @@ t[2] = 3; // compile failure</code></pre>
 	<tr>
 		<td>
 <pre><code>std::integral_constant&lt;int, 24&gt;{}
-std::constant&lt;int, 24&gt;   // proposed
+std::constant&lt;int, 24&gt; // proposed
 boost::hana::int_c&lt;24&gt;
 boost::mpl::int_&lt;24&gt;</code></pre>
 		</td>
@@ -257,13 +259,13 @@ void f(int something, char y) {
 
 This proposal will reference a few libraries that make heavy use of compile-time parameters. If readers are not familiar with these libraries, that is fine, the below should be sufficient description to understand some of the motivation of this paper. This paper will also reference other papers that are currently under discussion.
 
-### boost::mpl
+### Boost.MPL
 
-The [Boost.MPL](https://www.boost.org/doc/libs/1_67_0/libs/mpl/doc/index.html) library is a general-purpose template metaprogramming framework of compile-time algorithms, sequences and metafunctions. It was designed in the constraints of C++03 and organizes itself around passing types to class template parameters.
+The [Boost.MPL](https://www.boost.org/doc/libs/1_71_0/libs/mpl/doc/index.html) library is a general-purpose template metaprogramming framework of compile-time algorithms, sequences, and metafunctions. It was designed under the constraints of C++03. MPL organizes itself around passing types to class template parameters. It includes things like `int_` as a way to turn a value into a type so that values can be used with the type-based parts of the library.
 
-### boost::hana
+### Boost.Hana
 
-[Boost.Hana](https://www.boost.org/doc/libs/1_67_0/libs/hana/doc/html/index.html) is a metaprogramming library that aims to make metaprogramming just "programming", using as much "regular" C++ as possible. It does this by merging types and values -- values are encoded in types, and types are turned into values -- so that most of the user interaction with `boost::hana` is by calling what appear to be regular functions.
+[Boost.Hana](https://www.boost.org/doc/libs/1_71_0/libs/hana/doc/html/index.html) is a metaprogramming library that aims to make metaprogramming just "programming", using as much "regular" C++ as possible. It does this by merging types and values -- values are encoded in types, and types are turned into values -- so that most of the user interaction with `boost::hana` is by calling what appear to be regular functions.
 
 ### bounded::integer
 
@@ -271,181 +273,190 @@ The [Boost.MPL](https://www.boost.org/doc/libs/1_67_0/libs/mpl/doc/index.html) l
 
 ### Class Types in Non-Type Template Parameters
 
-A feature has been added to C++20 that allows class types as non-type template parameters. To use such a type, it must be a literal type with a defaulted `operator==`, with all bases and data members meeting the same requirement ("strong structural equality").
+C++20 allows class types as non-type template parameters. To use such a type, it must be a literal type with a defaulted `operator==`, with all bases and data members meeting the same requirement ("strong structural equality").
 
 ## Why we need this proposal
 
 `constexpr` parameters have several advantages over existing solutions:
-* Better user experience due to uniform syntax on the caller's side: They do not need to remember `f(true_)` or `f(constant<true>)` for `f<true>()` or or anything else like that. The standard and most intuitive way to pass a value to a function is in the function parameter list: `f(true)`.
-* Better compile times as a result of being able to just pass things like `true` rather than instantiating a wrapper template. This applies primarily to solutions like `boost::mpl` (where everything has to be a type, including integers, and is the origin of `integral_constant`) and `boost::hana` (where everything is passed as a regular function parameter, even compile-time constants, which uses the equivalent of `integral_constant` but passed by value instead of by type). The cost of time and memory to compile `void f(constexpr int x)` should be essentially the same as `template<int x> void f()`.
-* Library authors can add compile-time diagnostics without adding run-time code generation for checking. This is somewhat possible now, but it requires that the caller put the result in a constexpr context and does not work in all cases (for instance, std::regex cannot yet be a literal type due to possible memory allocation). There is a large amount of user confusion today when a `constexpr` function is passed all `constexpr` parameters, but an error is caught at run time instead of compile time because the result of that function was not stored in a `constexpr` result.
-* Allows adding a new overload that can take advantage of known-at-compile-time values, without forcing all callers to change
-* Allows easier integration of strongly-typed code with existing code. There are many generic libraries that expect to be able to initialize integer types with a literal `0` or `1`. To support this, the `bounded::integer` library would have to accept all arguments of type `int` (and hope that the library never passes `0U`), which removes some of the compile-time safety from the library. If `bounded::integer` could know that it was dealing with a safe value, it would go a long way toward improving interoperability.
 
-## Details
+- Better user experience due to uniform syntax on the caller's side: They do not need to remember `f(true_)` or `f(constant<true>)` for `f<true>()` or or anything else like that. The standard and most intuitive way to pass a value to a function is as a function parameter: `f(true)`.
+- Better compile times as a result of being able to just pass things like `true` rather than instantiating a wrapper template. This applies primarily to solutions like `boost::mpl` (where everything has to be a type, including integers, and is the origin of `integral_constant`) and `boost::hana` (where everything is passed as a regular function parameter, even compile-time constants, which uses the equivalent of `integral_constant` but passed by value instead of by type). The cost of time and memory to compile `void f(constexpr int x)` should be essentially the same as `template<int x> void f()`.
+- Library authors can add compile-time diagnostics without adding run-time code generation for checking. This is somewhat possible now, but it requires that the caller put the result in a constexpr context and does not work in all cases (for instance, `std::regex` cannot be a literal type due to dependence on `std::locale`). There is a large amount of user confusion today when a `constexpr` function is passed all `constexpr` parameters, but an error is caught at run time instead of compile time because the result of that function was not stored in a `constexpr` result.
+- Allows adding a new overload that can take advantage of known-at-compile-time values, without forcing all callers to change
+- Allows easier integration of strongly-typed code with existing code. There are many generic libraries that expect to be able to initialize integer types with a literal `0` or `1`. To support this, the `bounded::integer` library would have to accept all arguments of type `int` (and hope that the library never passes `0U`), which removes some of the compile-time safety from the library. If `bounded::integer` could know that it was dealing with a safe value, it would go a long way toward improving interoperability.
+
+## How does this work
+
+The model that this proposal tries to follow is that the behavior of a `constexpr` function parameter exactly matches the behavior of a non-type template parameter as much as is possible. More specifically, the expected implementation of this feature would be to have the equivalent of a template instantiation for each value of a `constexpr` parameter used by the program. Using a `👨‍🌾constexpr👨‍🌾` function parameter creates a new template instantiation for each distinct constant expression value, plus a single instantiation for all run-time values (if the function is ever called with a run-time value).
 
 ### In which contexts can `constexpr` parameters be used?
 
-This paper proposes allowing a `constexpr` parameter anywhere that any other `constexpr` value could be used in any location that appears lexically after the parameter. In this way, a `constexpr` parameter is usable in much the same way as a template parameter. In particular, the following code is valid:
+This paper proposes allowing a `constexpr` parameter anywhere that any other `constexpr` value could be used in any location that appears lexically after the parameter. In this way, a `constexpr` parameter is usable in the same way as a template parameter. In particular, the following code is valid:
 
-	void f(constexpr int X, std::array<int, X> const & a)
-		noexcept(X > 5)
-		requires(X % 2 == 0)
-	{
-		static_assert(X == 6);
-	}
+```
+auto f(constexpr int x, std::array<int, x> const & a)
+	noexcept(x > 5)
+	requires(x % 2 == 0)
+{
+	static_assert(x == 6);
+	return std::array<int, x + 9>();
+}
+```
 
 ### Function static variables
 
-There are two possible mental models for this. The first mental model is that these are regular functions for which some parameters are available for use at compile time. The second mental model is that this is purely an alternative syntax for function templates and there is a "desugaring" to a function template. Those two models are not in conflict for most cases, but when `static` variables come into play, they suggest very different results.
+There are two possible mental models for this feature. This paper proposes that it is an alternative syntax for templates, but another plausible mental model is that these are regular functions for which some parameters are available for use at compile time. Those two models are not in conflict for most cases, but when `static` variables come into play, they suggest very different results.
 
-	int & f(constexpr int) {
-		static int x = 0;
-		return x;
-	}
-	++f(0);
-	std::cout << f(1);
+```
+int & f(constexpr int) {
+	static int x = 0;
+	return x;
+}
+++f(0);
+std::cout << f(1);
+```
 
-What is this program guaranteed to print? The "secretly a template" model says it should print "0" because these are two different functions. The "regular function" model says it should print "1" because the variable `x` is declared `static`, and since we have written just one function here, we are using the same variable. One of primary goals of this proposal is to allow a more regular style of programming, rather than separate rules for run time vs. compile time. Therefore, this paper has a goal of forwarding the "regular function" model. Unfortunately, the rules for templates are the way they are for a reason. There are many examples that, without further work on the topic, seem to suggest that the template model is the only reasonable model:
+What is this program guaranteed to print? The "actually a template" model says it should print "0" because these are two different functions. The "regular function" model says it should print "1" because the variable `x` is declared `static`, and since we have written just one function here, we are using the same variable. One of primary goals of this proposal is to allow a more regular style of programming, rather than separate rules for run time vs. compile time. Therefore, this paper has a goal of aligning with the "regular function" model. Unfortunately, the rules for templates are the way they are for a reason. There are many examples that seem to suggest that the template model is the only reasonable model:
 
-	void f(constexpr int n) {
-		static constexpr int x = n;
-		static_assert(x == n);
-	}
+```
+void f(constexpr int n) {
+	static constexpr int x = n;
+	static_assert(x == n);
+}
+```
 
 Is this `static_assert` guaranteed to succeed? With the regular function model, this function would not be guaranteed to succeed, because the first invokation of the function determines the value of `x`. However, there is no fixed ordering of "first" at compile time, especially considering that the function can be called from two different translation units with two different arguments. This suggests that it is not workable to have static constexpr variables of dependent value in such functions. We run into the same problems with static variables of dependent type.
 
-	void f(constexpr int n) {
-		using T = std::conditional_t<n == 0, int, long>;
-		static T x;
-	}
+```
+void f(constexpr int n) {
+	using T = std::conditional_t<n == 0, int, long>;
+	static T x;
+}
+```
 
 The definition of "dependent type" ends up applying to any locally defined type.
 
-	void f(constexpr int n) {
-		static struct {
-			static int f() {
-				return n;
-			}
-		} s;
-	}
+```
+void f(constexpr int n) {
+	static struct {
+		static int f() {
+			return n;
+		}
+	} s;
+}
+```
 
 This may not seem like a very common problem (locally defined structs are uncommon in most code bases), but we do have one common example of local types:
 
-	auto f(constexpr int n) {
-		return [] { return n; };
-	}
+```
+auto f(constexpr int n) {
+	static auto foo = [] { return n; };
+}
+```
 
-Lambdas create a unique type (and here we must create a unique type for the code to make any sense). If we want to not close off any options and wait for a solution (which may not exist) that can match the semantics of a regular function, we would have to not allow static variables, lambdas, or local class definitions. This paper argues that these restrictions are too severe, and thus the only workable model is the model in which these functions behave as templates.
+Lambdas create a unique type (and here we must create a unique type for the code to make any sense).
 
-To translate into template terms, using a `constexpr` function parameter creates a new template instantiation for each distinct value. Using a `constexpr?` function parameter creates a new template instantiation for each distinct constant expression value, plus a single instantiation for all run-time values.
+It also feels like there is a required symmetry between the identity of static variables and the identity of types returned. It is a must-have that the type returned from such a function can be dependent on the value for it to solve the use cases outlined at the start of the paper. This essentially gives us only two options: either we have the same behavior as templates do (there is a separate static variable per constexpr value) or we would have to not allow static variables (possibly just no static variables of dependent type or value). I am neutral on which option we choose.
 
 ### Overload resolution
 
-Determine which function is called can be divided into two steps: determining viable candidates, and then determining the best match from that set of viable candidates. `constexpr` parameters will change both parts of this equation.
+Determining which function is called is divided into two steps: determining viable candidates, and then determining the best match from that set of viable candidates. `constexpr` parameters will change both of these.
 
 #### Viable candidates
 
-Determining viable candidates follows a simple rule that should mostly match intuition: if a function parameter is marked `constexpr`, the corresponding argument must be able to initialize a constexpr variable of that same type. Note that this is subtly different from another simple rule, which would be that if the parameter is marked `constexpr`, the corresponding argument must also be a constant expression. The following code should highlight the difference between the two options:
+Determining viable candidates follows a simple rule that should mostly match intuition: if a function parameter is marked `constexpr`, the corresponding argument must be able to initialize a constexpr variable of that same type. Examples:
 
-	void f(constexpr bool x);
-	void f(bool x);
-	
-	std::true_type x = some_function();
-	f(x);
+```
+void a(constexpr int x); // 1
+void a(int x); // 2
 
-This code works under this proposal, but not under the alternative formulation. `boost::hana` makes heavy use of types like `true_type` and `integral_constant` to turn values into types, and these types have a constexpr conversion operator to the "underlying" type. It is not necessary to declare `x` constexpr in this example because it is stateless. Ideally, such code would continue to work even if the author migrates to a `constexpr` parameter solution where `f` accepts `constexpr bool` instead of being a function template that expects `std::true_type` or `std::false_type`. Prior to the introduction of `constexpr` lambdas in C++17, many of these functions could not be marked `constexpr`, and thus they depend on this behavior.
+a(1); // 1 and 2 are viable
 
-The "match `constexpr`" rule is even worse in the opposite case:
+int x = 5;
+a(x); // only 2 is viable
+```
 
-	struct Thing {
-		constexpr Thing(int setting1, int setting2);
-		Thing(path const & configuration_file);
-		
-		// ...
-	};
-	
-	void f(Thing const thing);
-	void f(constexpr Thing thing);
-	
-	constexpr path p = "/home/david/file.txt";
-	f(p);
+```
+void b(constexpr bool x);
+void b(bool x);
 
-Here, we have a `constexpr` variable as the source, but the only viable candidate is the overload with the non-`constexpr` parameter. It would be quite surprising indeed if we determined that an overload which could not be called was viable to be called.
+std::true_type x;
+b(x); // 1 and 2 are viable due to constexpr conversion operator
+```
 
 #### Overload resolution
 
-Overload resolution is a bit more complicated, but once again has a fairly simple intuitive backing. The general idea is that `constexpr` is used only as a tie-breaker for otherwise ambiguous overloads. [Note: this section is still in progress and may change]
+Overload resolution is a bit more complicated, but once again has a fairly simple intuitive backing. The general idea is that `constexpr` is a tie-breaker for otherwise equivalent overloads. This is similar to what we do for top-level cv-qualifiers on references: "S1 and S2 include reference bindings ([dcl.init.ref]), and the types to which the references refer are the same type except for top-level cv-qualifiers, and the type to which the reference initialized by S2 refers is more cv-qualified than the type to which the reference initialized by S1 refers." This feature would be specified similarly, but talk about `constexpr` instead of references and cv-qualifiers.
 
-	void f0(int); // 1
-	void f0(constexpr long); // 2
-	f0(42); // calls 1
-	
-	void f1(int); // 1
-	void f1(constexpr int); // 2
-	f1(42); // calls 2
-	
-	void f2(unsigned); // 1
-	void f2(constexpr long); // 2
-	f2(42); // calls 2
+```
+void f0(int);
+void f0(constexpr long);
+f0(42); // calls f0(int)
 
-The complications arise when considering overloads differing only by value category. The exact rules of overload resolution will have to be determined after the work on improving support for `constexpr` references.
-	
+void f1(int);
+void f1(constexpr int);
+f1(42); // calls f1(constexpr int)
+
+void f2(unsigned);
+void f2(constexpr long);
+f2(42); // ambiguous
+```
+
 ### What are the restrictions on types that can be used as `constexpr` parameters?
 
 There are two possible options here. Conceptually, we would like to be able to use any literal type as a `constexpr` parameter. This gives us the most flexibility and feels most like a complete feature. Again, however, the obvious implementation strategy for this paper would be to reuse the machinery that handles templates now: internally treat `void f(constexpr int x)` much like `template<int x> void f()`. In the "template" model, we would limit `constexpr` parameters to be types which can be passed as template parameters: strong structural equality. This paper proposes following the lead of non-type template parameters.
 
 ### Can you take the address of `constexpr` parameter?
 
-Just like in P0732, we would like to be able to call const member functions on these parameters at run time, but for that to be possible they need to have an address. To satisfy that requirement, constexpr parameters should be const objects, of which there is one instance in the program for every distinct constexpr parameter value. P0732 proposes this only for non-type template parameters of class type, but there seems to be no reason to limit this in that way. For consistency, it seems that this should be allowed for all constexpr parameters, not just those of class type, and the same argument applies to all non-type template parameters.
+Just like in P0732, we would like to be able to call const member functions on these parameters at run time, but for that to be possible they need to have an address. To satisfy that requirement, non-type template parameters of class type are const objects, of which there is one instance in the program for every distinct constexpr parameter value. P0732 proposes this only for non-type template parameters of class type because built-in non-type template parameters are already defined as being prvalues. For constexpr function parameters, these feels like a strange difference. Any solution here ends up leading to inconsistencies with other parts of the language, and thus this section needs further thought.
 
 ### Function Pointers
 
-This paper does not propose adding support for pointers to functions accepting `constexpr` parameters simply because the full interactions there have not yet been explored. Theoretically this could be supported if the type of the function pointer was `void(constexpr int)` and the function pointer is formed in a constexpr context, but that last requirement would be a completely new type of restriction.
+This paper does not propose adding support for pointers to functions accepting `constexpr` parameters simply because the full interactions there have not yet been explored. Theoretically this could be supported if the type of the function pointer was `void(constexpr int)` and the function pointer is formed in a constexpr context. There appears to be some precedent in this space if we were to consider the function pointer type to have a `consteval` copy constructor, but this is not being proposed at this time.
 
 ### Perfect forwarding
 
 It would be nice to be able to write a function template that accepts parameters that might be `constexpr` and forward them on to another function. For example, if I have a class that wraps another type, it would be nice to write a constructor that forwards all arguments on to the wrapped type. To do this, we need some sort of perfect forwarding mechanism. There are three possibilities here:
 
-1) Do not solve this problem. Ignoring this problem causes an exponential explosion on forwarding functions and makes it impossible to write variadic versions of such functions.
-2) Follow the lead of rvalue vs. lvalue references and implement a "constexpr deduction" rule. In other words, for `template<typename T> void f(T x)`, the type `T` can be deduced as `constexpr int`. This seems appealing at first, because of the analogy to rvalue references and the fact that existing code would automatically become "aware" of this feature and take advantage of it. However, that is both a benefit and a drawback, because it means that all function templates get this behavior. This could have a very large cost in time and memory at compile time if compilers have to activate much of their current template machinery to implement this. This also requires using a deduced type even when the exact type is known.
-3) "Maybe constexpr" parameters. `void f(constexpr? int x)` is a (strawman) syntax to allow users to write a single function overload that can accept parameters that can be used as compile-time constants and parameters which cannot.
+1. Do not solve this problem. Ignoring this problem causes an exponential explosion on forwarding functions and makes it impossible to write variadic versions of such functions.
+2. Follow the lead of rvalue vs. lvalue references and implement a "constexpr deduction" rule. In other words, for `template<typename T> void f(T x)`, the type `T` can be deduced as `constexpr int`. This seems appealing at first, because of the analogy to rvalue references and the fact that existing code would automatically become "aware" of this feature and take advantage of it. However, that is both a benefit and a drawback, because it means that all function templates get this behavior. This could have a very large cost in time and memory at compile time if compilers have to activate much of their current template machinery to implement this. This also requires using a deduced type even when the exact type is known. In other words, all constexpr values passed to existing templates suddenly instantiates different templates where before they instantiated the same template.
+3. "Maybe constexpr" parameters. `void f(👨‍🌾constexpr👨‍🌾 int x)` is a (strawman) syntax to allow users to write a single function overload that can accept parameters that can be used as compile-time constants and parameters that cannot.
 
-Option 3 seems like the best option, but requires some more explanation for how it would work. There are two primary use cases for this functionality. The first use case is to forward an argument to another function that has a `constexpr?` parameter or is overloaded on `constexpr`. The second use case is to write a single function that has one small bit of code that is run only at compile time or only at run time. For instance, `std::array::operator[]` could be implemented like this:
+Option 3 seems like the best option, but requires some more explanation for how it would work. There are two primary use cases for this functionality. The first use case is to forward an argument to another function that has a `👨‍🌾constexpr👨‍🌾` parameter or is overloaded on `constexpr`. The second use case is to write a single function that has one small bit of code that is run only at compile time or only at run time. For instance, `std::array::operator[]` could be implemented like this:
 
-	auto & operator[](constexpr? size_t index) {
-		if constexpr(is_constant_expression(index)) {
-			static_assert(index < size());
-		}
-		return __data[index];
+```
+auto & array::operator[](👨‍🌾constexpr👨‍🌾 size_t index) {
+	if constexpr (is_constant_expression(index)) {
+		static_assert(index < size());
 	}
+	return __data[index];
+}
+```
 
-Here, we put in a compile-time check where possible, but otherwise the behavior is the same. I actually expect this to be the primary way to use `constexpr` parameters when overloading with run-time parameters, as it ensures there are no accidental differences in the definition.
+We put in a compile-time check where possible, but otherwise the behavior is the same. I actually expect this to be the primary way to overload `constexpr` parameters with run-time parameters when all that is needed is a minor difference, as it ensures there are no accidental differences in the definition.
 
-Here we show a sample implementation of `is_constant_expression`, defined as a macro, which is possible to write in standard C++ with the introduction of this paper:
+This is a sample implementation of `is_constant_expression`, defined as a macro, which is possible to write in standard C++ with the introduction of this paper:
 
-	std::true_type is_constant_expression_impl(constexpr int);
-	std::false_type is_constant_expression_impl(int);
-	
-	#define is_constant_expression(...) \
-		decltype(is_constant_expression_impl( \
-			(void(__VA_ARGS__), 0) \
-		))::value
+```
+std::true_type is_constant_expression_impl(constexpr auto);
+std::false_type is_constant_expression_impl(auto);
+
+#define is_constant_expression(...) \
+	decltype(is_constant_expression_impl( \
+		(void(__VA_ARGS__), 0) \
+	))::value
+```
 
 This must be a macro so that it does not evaluate the expression and perform side effects. We need to make it unevaluated, and the macro wraps that logic. I believe it shows the strength of this solution that users can use it to portably detect whether an expression is constexpr (a common user request for a feature), rather than needing that as a built-in language feature. If we had lazy function parameters, the implementation would be even more straightforward:
 
-	constexpr bool is_constant_expression(constexpr int) { return true; }
-	constexpr bool is_constant_expression(~LAZY~ int) { return false; }
-
-Regardless of how the feature is specified, it is an essential component of this proposal.
+```
+constexpr bool is_constant_expression(~LAZY~ constexpr auto) { return true; }
+constexpr bool is_constant_expression(~LAZY~ auto) { return false; }
+```
 
 ## Effect on the standard library
 
-This paper is expected to have a fairly small impact on the standard library, because we currently make use of few non-type template parameters on function templates. The most obvious change is that we should add `operator[]` to `std::tuple`. If Evolution approves of the direction of this paper, I will also perform a complete analysis of the standard library to determine impact.
-
-## Effect on other parts of the language
-
-We also have `std::get` baked into the language in the form of structured bindings. Users should be able to opt-in to structured bindings with `std::tuple_size`, `std::tuple_element`, and `operator[]` instead of `std::tuple_size`, `std::tuple_element`, and `get<i>`. Right now, the tuple-like protocol first tries member `get`, then `std::get`. We could add `operator[]` into the mix, either as the first option or the last option.
+This paper is expected to have a fairly small impact on the standard library, because we currently make use of few non-type template parameters on function templates. The feature will obviously add a new tool for libraries to begin taking advantage of, but I don't believe there are any changes which would be embarrassing or otherwise mandatory to make in response to this feature.
 
 ## Related work
 
@@ -455,46 +466,88 @@ It is recommended to go through the list of examples at the beginning and think 
 
 `std::is_constant_evaluated()` allows the user to test whether the current evaluation is in a context that requires constant evaluation, so the user could say `if (is_constant_evaluated()) {} else {}`. This solves only some of the problems addressed by this paper. The general issue is that `std::is_constant_evaluated()` is testing how the expression is used, but `constexpr` function parameters are all about what data is provided. To clarify the difference, consider an alternative universe where we want to restrict memory orders to be compile-time constants, rather than the current state where they could be run-time values. With constexpr parameters, the solution is straightforward:
 
-	void atomic<T>::store(T desired, constexpr std::memory_order order = std::memory_order_seq_cst) noexcept;
+```
+void atomic<T>::store(T desired, constexpr std::memory_order order = std::memory_order_seq_cst) noexcept;
+```
 
 This would require the user to pass the memory order as a compile-time constant, but places no constraints on the overall execution being constexpr (and in fact, we know it never will be because atomic is not a literal type). It is not possible to implement this with `std::is_constant_evaluated()`. For a perhaps more compelling example, this is how we likely would have originally designed tuple if we had constexpr parameters:
 
-	constexpr auto && tuple::operator[](constexpr std::size_t index) { ... }
+```
+constexpr auto && tuple::operator[](constexpr std::size_t index) { ... }
+```
 
 where the tuple variable (`*this`) is (potentially) a run time value. In other words, the code using the index is mixed in with the code using the tuple. `std::is_constant_evaluated()` allows you to write different code depending on whether the entire evaluation is part of a constexpr context. `constexpr` parameters allows you to partially apply certain arguments at compile time without needing to compute the entire expression at compile time.
 
-Another important difference is that `if constexpr (std::is_constant_evaluated())` is meaningless: `if constexpr` is a context that requires a constant expression, and thus `std::is_constant_evaluated()` will always return true. Many of the examples rely on being able to, for instance, return different types or write code in different branches that would not compile if the value is not a constant expression.
+Another important difference is that `if constexpr (std::is_constant_evaluated())` is meaningless: `if constexpr` is a context that requires a constant expression, and thus `std::is_constant_evaluated()` will always return true and the branch will always be taken. Many of the examples rely on being able to, for instance, return different types or write code in different branches that would not compile if the value is not a constant expression.
 
 ### `consteval`
 
-This has many of the same problems as `std::is_constant_evaluated()`. It also does not provide a way to overload on `constexpr` vs. not.
+This has many of the same limitations as `std::is_constant_evaluated()`. It also does not provide a way to overload on "known at compile time" vs. "not known at compile time".
 
 ### Parametric expressions: [P1121](http://wg21.link/p1121)
 
-This proosal introduces the concept of "hygienic macros"
+P1121 introduces the concept of "hygienic macros"
 
-	using add(auto a, auto b) { return a + b; }
+```
+using add(auto a, auto b) { return a + b; }
+```
 
-It supports evaluating exactly once or 0-N times. It proposes allowing constexpr parameters, but just to the parametric expressions. Parametric expressions can solve only the problems that do not require overloading, but it creates yet another shadow world.
+It supports evaluating exactly once or 0-N times. It proposes allowing constexpr parameters, but just to the parametric expressions. Parametric expressions create yet another shadow world. In other words, if we were to accept P1121, we would have a new type of function that can be used to solve most of the problems solved by this paper, but only if you can also work with the other differences between parametric expressions and normal functions (no overloading is the most prominent example). It does not aim to completely replace existing functions, and thus would be an incomplete solution to this problem.
 
-## Syntax
+## Syntax / Bikeshedding
 
-There are two language-level features being proposed by this paper: allowing function parameters to be annotated in some way to allow them to be used at compile time within the function and require initialization from a constant expression, and allowing function parameters to be annotated in some way to allow them to be used at compile time if they are initialized with a constant expression. This section will discuss the syntax for those two features.
+There are two language-level features being proposed by this paper: 1) allowing function parameters to be annotated in some way to allow them to be used at compile time within the function and require initialization from a constant expression, and 2) allowing function parameters to be annotated in some way to allow them to be used at compile time if they are initialized with a constant expression. This section will discuss the syntax for those two features.
 
 ### Option 1
 
-There is currently an inconsistency in the meaning of `constexpr`. On a variable declaration, it means "must be evaluated at compile time", but on a function declaration, it means "can be evaluated at compile time if it does stuff that can be done at compile time". We recently added a new keyword, `consteval`, that can be applied to only function declarations and it means "must be evaluated at compile time". We could take this as an opportunity to remove this inconsistency. This option would expand the keyword `consteval` to be used on variable declarations with the same meaning that `constexpr` has today. `constexpr` on a function declaration would retain its current meaning, but `constexpr` on a variable declaration would mean that the variable can be used in a constant expression context if it was initialized with a constant expression. The suggested meaning of the keywords would be that `consteval` means the thing is evaluated at compile time and `constexpr` means the thing is evaluated at compile time if the expression it uses can be evaluated at compile time.
+There is currently an inconsistency in the meaning of `constexpr`. On a variable declaration, it means "must be evaluated at compile time", but on a function declaration, it means "can be evaluated at compile time if it only does stuff that can be done at compile time". We recently added a new keyword, `consteval`, that can be applied to only function declarations and it means "must be evaluated at compile time". We could take this as an opportunity to remove this inconsistency. This option would be to expand the keyword `consteval` to be used on variable declarations with the same meaning that `constexpr` has today. `constexpr` on a function declaration would retain its current meaning, but `constexpr` on a variable declaration would mean that the variable can be used in a constant expression context if it was initialized with a constant expression. The suggested meaning of the keywords would be that `consteval` means the thing is evaluated at compile time and `constexpr` means the thing is evaluated at compile time if the expression it uses can be evaluated at compile time.
 
-This has the advantage of removing an existing inconsistency in the meaning of the `constexpr ` keyword. It is also a backward-compatible change. It has the downside that the intent of users writing `constexpr` today could be to require a diagnostic if code ever changes that does not provide a compile-time constant. The other issue is that one of the design goals of `consteval` is that the compiler does not need to emit certain information, which would imply that `consteval` on a variable would produce something more like a template parameter: that interpretation of `consteval` would give a name to a prvalue, not an object with identity.
+This has the advantage of removing an existing inconsistency in the meaning of the `constexpr` keyword. It is also a backward-compatible change. It has the downside that the intent of users writing `constexpr` today could be to require a diagnostic if code ever changes that does not provide a compile-time constant. The other issue is that one of the design goals of `consteval` is that the compiler does not need to emit certain information, which would imply that `consteval` on a variable would produce something more like a template parameter: that interpretation of `consteval` would give a name to a prvalue, not an object with identity.
 
 ### Option 2
 
-We keep things as they are today with regards to the meaning of `constexpr` and `consteval`. We allow annotating a function parameter with `constexpr` with the sdame meaning as a variable declaration: must be initialized with a constant expression. We add a new keyword, `maybe_constexpr`, that deduces whether the parameter is known at compile time. This paper originally proposed the syntax `constexpr?`. `consteval` was originally spelled as `constexpr!`, but `constexpr!` was rejected in favor of `consteval` for a variety of reasons, some of which also apply to `constexpr?`. One of the primary objections to names with punctuation is the question of how you pronounce the keyword. It would make spoken C++ be a tonal language, or else people will come up with a different name, such as "maybe constexpr". If people will come up with a different name for the keyword, we might as well name the keyword that name, thus `maybe_constexpr`.
+We keep things as they are today with regards to the meaning of `constexpr` and `consteval`. We allow annotating a function parameter with `constexpr` with the same meaning as a variable declaration: must be initialized with a constant expression. We add a new keyword, `maybe_constexpr`, that deduces whether the parameter is known at compile time. This paper originally proposed the syntax `constexpr?`. `consteval` was originally spelled as `constexpr!`, but `constexpr!` was rejected in favor of `consteval` for a variety of reasons, some of which also apply to `constexpr?`. One of the primary objections to names with punctuation is the question of how you pronounce the keyword. It would make spoken C++ be a tonal language, or else people will come up with a different name, such as "maybe constexpr". If people will come up with a different name for the keyword, we might as well name the keyword that name, thus `maybe_constexpr`.
 
 ## Further work needed
 
 References and pointers declared `constexpr` or in template parameters currently have difficult to understand semantics. There is opportunity to simplify these rules through generalization. For example, under the current rules, is the following code valid?
 
-	constexpr int const & x = 42;
+```
+constexpr int const & x = 42;
+```
 
 The answer is: it depends. If `x` is a global variable, yes. If `x` is a local variable, no. If you add in `static` (any of the meanings), then it becomes valid again. Cleaning this up will be the topic of another paper.
+
+## FAQ
+
+### Default parameters
+
+Q. Is the following code valid?
+
+```
+int runtime() { return 5; }
+auto foo(constexpr int n = runtime()) -> std::array<int, n> { return {}; }
+int main() {
+    foo(1); // OK
+    foo();  // ill-formed, presumably?
+}
+```
+
+A. No. It is invalid in the first line, just like the following code is invalid today in all versions of C++:
+
+```
+int runtime() { return 5; }
+template<int n = runtime()>
+void foo();
+```
+
+The following similar code would be valid in the first call and invalid in the second call:
+
+```
+int runtime() { return 5; }
+auto foo(👨‍🌾constexpr👨‍🌾 int n = runtime()) -> std::array<int, n> { return {}; }
+int main() {
+    foo(1); // OK
+    foo();  // ill-formed because std::array<int, n> is ill-formed
+}
+```
