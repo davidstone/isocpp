@@ -13,16 +13,16 @@ Still need to do full library analysis of prefix `++` and `--`.
 
 This proposal follows the lead of `operator<=>` (see [Consistent Comparison](http://open-std.org/JTC1/SC22/WG21/docs/papers/2017/p0515r3.pdf)) by generating rewrite rules if a particular operator does not exist in current code. All of these operators would support `= default` to explicitly opt in and `= delete` to explicitly opt out.
 
-- Rewrite `lhs += rhs` as `lhs = std::move(lhs) + rhs`
-- Rewrite `lhs -= rhs` as `lhs = std::move(lhs) - rhs`
-- Rewrite `lhs *= rhs` as `lhs = std::move(lhs) * rhs`
-- Rewrite `lhs /= rhs` as `lhs = std::move(lhs) / rhs`
-- Rewrite `lhs %= rhs` as `lhs = std::move(lhs) % rhs`
-- Rewrite `lhs &= rhs` as `lhs = std::move(lhs) & rhs`
-- Rewrite `lhs |= rhs` as `lhs = std::move(lhs) | rhs`
-- Rewrite `lhs ^= rhs` as `lhs = std::move(lhs) ^ rhs`
-- Rewrite `lhs <<= rhs` as `lhs = std::move(lhs) << rhs`
-- Rewrite `lhs >>= rhs` as `lhs = std::move(lhs) >> rhs`
+- Rewrite `lhs += rhs` as `lhs = std::move(lhs) + rhs`, but evaluate `lhs` only once
+- Rewrite `lhs -= rhs` as `lhs = std::move(lhs) - rhs`, but evaluate `lhs` only once
+- Rewrite `lhs *= rhs` as `lhs = std::move(lhs) * rhs`, but evaluate `lhs` only once
+- Rewrite `lhs /= rhs` as `lhs = std::move(lhs) / rhs`, but evaluate `lhs` only once
+- Rewrite `lhs %= rhs` as `lhs = std::move(lhs) % rhs`, but evaluate `lhs` only once
+- Rewrite `lhs &= rhs` as `lhs = std::move(lhs) & rhs`, but evaluate `lhs` only once
+- Rewrite `lhs |= rhs` as `lhs = std::move(lhs) | rhs`, but evaluate `lhs` only once
+- Rewrite `lhs ^= rhs` as `lhs = std::move(lhs) ^ rhs`, but evaluate `lhs` only once
+- Rewrite `lhs <<= rhs` as `lhs = std::move(lhs) << rhs`, but evaluate `lhs` only once
+- Rewrite `lhs >>= rhs` as `lhs = std::move(lhs) >> rhs`, but evaluate `lhs` only once
 - Rewrite `++x` as `x += 1`
 - Rewrite `--x` as `x -= 1`
 - Rewrite `x++` as `++x` but return a copy of the original value
@@ -147,6 +147,17 @@ Are there any improvements we can make to this signature? One possible problem i
 Now our compound assignment operator returns whatever the assignment operator returns. We have a technical reason to make this change, but does it match up with our expectations? Conceptually, `operator+=` should perform an addition followed by an assignment, so it seems reasonable to return whatever assignment returns, and this mirrors the (only?) type in the standard library that returns something other than `*this` from its assignment operator. This is also the behavior that would naturally fall out of using a rewrite rule such that the expression `lhs += rhs` is rewritten to `lhs = std::move(lhs) + rhs`, which is what is proposed by this paper.
 
 One final question might be about that somewhat strange looking `std::move(lhs)` piece. You might wonder whether this is correct or safe, since it appears to lead to a self-move-assignment. Fortunately, we sidestep this problem entirely because there is actually no self-move-assignment occurring here. For well-behaved types, `operator+` might accept its argument by rvalue-reference, but that function then returns by value. This means that the object assigned to `lhs` is a completely separate object, and there are no aliasing concerns.
+
+### Single evaluation
+
+Because this proposal works in terms of expression rewrites, there is a pitfall in simply rewriting `lhs @= rhs` as `lhs = std::move(lhs) @ rhs`: the expression `lhs` appears twice. We want essentially the same semantics that a function would give us: exactly one evaluation of `lhs`. In other words, the specification would have to be equivalent to something like
+
+```
+[&] {
+	auto && __temp = lhs;
+	return __temp = std::move(__temp) @ rhs;
+}()
+```
 
 ### Allocators
 
