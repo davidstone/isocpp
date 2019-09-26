@@ -1,7 +1,7 @@
 # Automatically Generate More Operators
 
-Document Number: P1046R0
-Date: 2018-04-28
+Document Number: D1046R1
+Date: 2019-09-26
 Author: David Stone (david.stone@uber.com, david@doublewise.net)
 Audience: Evolution Working Group (EWG), Library Evolution Working Group (LEWG)
 
