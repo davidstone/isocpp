@@ -1,7 +1,7 @@
 # `constexpr` Function Parameters
 
 <pre>Document Number: D1045R1
-Date: 2019-06-25
+Date: 2019-09-27
 Author: David Stone (david.stone@uber.com, david@doublewise.net)
 Audience: Evolution Working Group (EWG)</pre>
 
