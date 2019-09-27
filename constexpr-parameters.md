@@ -90,11 +90,16 @@ t[2] = 3; // compile failure</code></pre>
 		<td>
 <pre><code>std::integral_constant&lt;int, 24&gt;{}
 std::constant&lt;int, 24&gt; // proposed
+std::constant&lt;24&gt; // discussed
 boost::hana::int_c&lt;24&gt;
 boost::mpl::int_&lt;24&gt;</code></pre>
 		</td>
 		<td>
-			<pre><code>24</code></pre>
+<pre><code>&nbsp;
+&nbsp;
+24
+&nbsp;
+&nbsp;</code></pre>
 		</td>
 	</tr>
 	<tr>
@@ -128,19 +133,19 @@ f(constexpr int x);</code></pre>
 	</tr>
 	<tr>
 		<td>
-<pre><code>// Either all regex constructions have an extra
-// pass over the input to determine the parsing
-// strategy, or...
-auto const pathological = std::regex("(A+|B+)*C");
+<pre><code>// Either all regex constructions have an
+// extra pass over the input to determine the
+// parsing strategy, or...
+auto const r = std::regex("(A+|B+)*C");
 // exponential time against failed matches
 // starting with 'A' and 'B'.
-// See https://swtch.com/~rsc/regexp/regexp1.html</code></pre>
+// https://swtch.com/~rsc/regexp/regexp1.html</code></pre>
 		</td>
 		<td>
 <pre><code>// Scan can be done at compile time, so...
 &nbsp;
 &nbsp;
-auto const pathological = std::regex("(A+|B+)*C");
+auto const r = std::regex("(A+|B+)*C");
 // linear time against failed matches
 // starting with 'A' and 'B'.
 &nbsp;
@@ -156,42 +161,56 @@ auto const pathological = std::regex("(A+|B+)*C");
 		</td>
 		<td>
 <pre><code>auto const glob = std::regex("*");
-// static_assert failed "Regular expression token
-// '*' must occur after a character to repeat."</code></pre>
+// static_assert failed "Regular expression
+// token '*' must occur after a character to
+// repeat."</code></pre>
 		</td>
 	</tr>
 	<tr>
 		<td>
-<pre><code>// ???
-&nbsp;
-&nbsp;
-&nbsp;
-&nbsp;
-&nbsp;</code></pre>
-		</td>
-		<td>
-<pre><code>static_assert(pow(2_meters, 3) == 8_cubic_meters);
+<pre><code>static_assert(
+	pow<3>(2_meters) == 8_cubic_meters
+);
 meters runtime_value;
 std::cin &gt;&gt; runtime_value;
-if (pow(runtime_value, 2) &gt; 100_square_meters) {
+auto const computed = pow<2>(runtime_value);
+if (computed &gt; 100_square_meters) {
+	throw std::exception{};
+}</code></pre>
+		</td>
+		<td>
+<pre><code>static_assert(
+	pow(2_meters, 3) == 8_cubic_meters
+);
+meters runtime_value;
+std::cin &gt;&gt; runtime_value;
+auto const computed = pow(runtime_value, 2);
+if (computed &gt; 100_square_meters) {
 	throw std::exception{};
 }</code></pre>
 		</td>
 	</tr>
 	<tr>
 		<td>
-<pre><code>// Do I want my code to work at compile time, do I
-// want my code to be fast, or do I try to modify
-// my compiler to recognize the code and generate
-// the right assembly at run time when it write it
-// in the `constexpr` style?</code></pre>
+<pre><code>// Do I want my code to work at compile time,
+// do I want my code to be fast, or do I try
+// to modify my compiler to recognize the
+// code and generate the right assembly at
+// run time when it is written in the
+// `constexpr` style?
+&nbsp;
+&nbsp;
+&nbsp;
+&nbsp;
+&nbsp;
+</code></pre>
 		</td>
 		<td>
 <pre><code>// From the <a href="https://groups.google.com/a/isocpp.org/forum/#!topic/std-proposals/RdAK-0RyiY0">std-proposals forum</a>
-std::size_t strlen(constexpr char const * s) {
+size_t strlen(constexpr char const * s) {
 	for (const char *p = s; ; ++p) {
 		if (*p == '\0') {
-			return static_cast&lt;std::size_t&gt;(p - s);
+			return p - s;
 		}
 	}
 }
@@ -203,21 +222,27 @@ std::size_t strlen(char const * s) {
 	</tr>
 	<tr>
 		<td>
-<pre><code>// Cannot write a function that transparently uses
-// this intrinsic where possible. Cannot write a
-// function that puts the parameters in the
-// correct order without resorting to
-// `integral_constant` business.</code></pre>
+<pre><code>
+&nbsp;
+// Cannot write a function that transparently
+// uses this intrinsic where possible. Cannot
+// write a function that puts the parameters
+// in the correct order without resorting to
+// `integral_constant` business.
+&nbsp;
+&nbsp;
+&nbsp;
+</code></pre>
 		</td>
 		<td>
 			<pre><code>#include &lt;emmintrin.h&gt;
 &nbsp;
-void f(int something, char y) {
-	__m128i x;
-	// ...
-	// This intrinsic requires the second argument
-	// to be a compile-time constant
-	x = __builtin_ia32_aeskeygenassist128(x, y);
+void do_math(__v2di x, constexpr char z) {
+	__v2di y;
+	// ... some code ...
+	// This intrinsic requires the third
+	// argument to be a compile-time constant
+	x = __builtin_ia32_pclmulqdq128(x, y, z);
 	// ...
 }</code></pre>
 		</td>
@@ -607,3 +632,7 @@ int main() {
     foo();  // ill-formed because std::array<int, n> is ill-formed
 }
 ```
+
+## Summary
+
+The following represents a summary of all of the changes presented assuming we take my preferred suggestions.
