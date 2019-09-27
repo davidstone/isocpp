@@ -467,11 +467,98 @@ It supports evaluating exactly once or 0-N times. It proposes allowing constexpr
 
 There are two language-level features being proposed by this paper: 1) allowing function parameters to be annotated in some way to allow them to be used at compile time within the function and require initialization from a constant expression, and 2) allowing function parameters to be annotated in some way to allow them to be used at compile time if they are initialized with a constant expression. This section will discuss the syntax for those two features.
 
+### `constexpr` and `consteval` today:
+
+<table>
+	<tr>
+		<th></th>
+		<th>variables</th>
+		<th>functions</th>
+	</tr>
+	<tr>
+		<th>(nothing)</th>
+		<td>must be done at run time</td>
+		<td>must be done at run time</td>
+	</tr>
+	<tr>
+		<th>constexpr</th>
+		<td>must be done at compile time</td>
+		<td>done at compile time if necessary, usable at compile time if possible</td>
+	</tr>
+	<tr>
+		<th>consteval</th>
+		<td>not supported</td>
+		<td>must be done at compile time</td>
+	</tr>
+</table>
+
 ### Option 1
 
-There is currently an inconsistency in the meaning of `constexpr`. On a variable declaration, it means "must be evaluated at compile time", but on a function declaration, it means "can be evaluated at compile time if it only does stuff that can be done at compile time". We recently added a new keyword, `consteval`, that can be applied to only function declarations and it means "must be evaluated at compile time". We could take this as an opportunity to remove this inconsistency. This option would be to expand the keyword `consteval` to be used on variable declarations with the same meaning that `constexpr` has today. `constexpr` on a function declaration would retain its current meaning, but `constexpr` on a variable declaration would mean that the variable can be used in a constant expression context if it was initialized with a constant expression. The suggested meaning of the keywords would be that `consteval` means the thing is evaluated at compile time and `constexpr` means the thing is evaluated at compile time if the expression it uses can be evaluated at compile time.
+<table>
+	<tr>
+		<th></th>
+		<th>variables</th>
+		<th>functions</th>
+	</tr>
+	<tr>
+		<th>(nothing)</th>
+		<td>must be done at run time</td>
+		<td>must be done at run time</td>
+	</tr>
+	<tr>
+		<th>constexpr</th>
+		<td>done at compile time if necessary, usable at compile time if possible</td>
+		<td>done at compile time if necessary, usable at compile time if possible</td>
+	</tr>
+	<tr>
+		<th>consteval</th>
+		<td>must be done at compile time</td>
+		<td>must be done at compile time</td>
+	</tr>
+</table>
 
-This has the advantage of removing an existing inconsistency in the meaning of the `constexpr` keyword. It is also a backward-compatible change. It has the downside that the intent of users writing `constexpr` today could be to require a diagnostic if code ever changes that does not provide a compile-time constant. The other issue is that one of the design goals of `consteval` is that the compiler does not need to emit certain information, which would imply that `consteval` on a variable would produce something more like a template parameter: that interpretation of `consteval` would give a name to a prvalue, not an object with identity.
+Which simplifies to
+
+<table>
+	<tr>
+		<th>(nothing)</th>
+		<td>definitely run time</td>
+	</tr>
+	<tr>
+		<th>constexpr</th>
+		<td>run time or compile time</td>
+	</tr>
+	<tr>
+		<th>consteval</th>
+		<td>definitely compile time</td>
+	</tr>
+</table>
+
+There is currently an inconsistency in the meaning of `constexpr`. On a variable declaration, it means "must be evaluated at compile time", but on a function declaration, it means "can be evaluated at compile time if it only does stuff that can be done at compile time". In other words, on a function, `constexpr` today means "maybe constexpr". We recently added a new keyword, `consteval`, that can only be applied to function declarations and it means "must be evaluated at compile time". We could take this as an opportunity to remove this inconsistency. This option would be to expand the keyword `consteval` to be usable on variable declarations and require compile-time evaluation of the variable. `constexpr` on a function declaration would retain its current meaning, but `constexpr` on a variable declaration would mean that the variable can be used in a constant expression context if it was initialized with a constant expression. The suggested meaning of the keywords would be that `consteval` means the thing is evaluated at compile time and `constexpr` means the thing is evaluated at compile time if the expression it uses can be evaluated at compile time.
+
+This has the advantage of removing an existing inconsistency in the meaning of the `constexpr` keyword. It is also a backward-compatible change. It has the downside that the intent of users writing `constexpr` today could be to require a diagnostic if code ever changes that does not provide a compile-time constant. There could be a migration path, however.
+
+<table>
+	<tr>
+		<th>C++17</th>
+		<th>C++20 (proposed)</th>
+		<th>C++23 (proposed)</th>
+	</tr>
+	<tr>
+		<td>
+<pre><code>// must be initialized at compile time
+constexpr int x = foo();</code></pre>
+		</td>
+		<td>
+<pre><code>// constinit is redundant
+constinit constexpr int x = foo();</code></pre>
+		</td>
+		<td>
+<pre><code>// constinit requires compile-time initialization
+constinit constexpr int x = foo();</code></pre>
+		</td>
+	</tr>
+</table>
 
 ### Option 2
 
