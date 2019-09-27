@@ -29,7 +29,7 @@ This paper has three primary design goals:
 
 ## Changes In This Revision
 
-R1: The original version proposed a particular model of `static` function variables. R1 discusses the problems in that original model under the section "Function static variables". R1 also adds more detail on how overload resolution is supposed to work under the section "Overload resolution". Added section "Further work needed".
+R1: The original version proposed a particular model of `static` function variables. R1 discusses the problems in that original model under the section "Function static variables". R1 also adds more detail on how overload resolution is supposed to work under the section "Overload resolution". Added section "Further work needed". Propose a new syntax, including changing the meaning of `constexpr` on a variable declaration and supporting `consteval` variables.
 
 ## No Shadow Worlds
 
