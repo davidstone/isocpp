@@ -406,7 +406,7 @@ It is recommended to go through the list of examples at the beginning and think 
 `std::is_constant_evaluated()` allows the user to test whether the current evaluation is in a context that requires constant evaluation, so the user could say `if (is_constant_evaluated()) {} else {}`. This solves only some of the problems addressed by this paper. The general issue is that `std::is_constant_evaluated()` is testing how the expression is used, but `constexpr` function parameters are all about what data is provided. To clarify the difference, consider an alternative universe where we want to restrict memory orders to be compile-time constants, rather than the current state where they could be run-time values. With constexpr parameters, the solution is straightforward:
 
 ```
-void atomic<T>::store(T desired, constexpr std::memory_order order = std::memory_order_seq_cst) noexcept;
+void atomic::store(T desired, constexpr memory_order order = memory_order_seq_cst) noexcept;
 ```
 
 This would require the user to pass the memory order as a compile-time constant, but places no constraints on the overall execution being constexpr (and in fact, we know it never will be because atomic is not a literal type). It is not possible to implement this with `std::is_constant_evaluated()`. For a perhaps more compelling example, this is how we likely would have originally designed tuple if we had constexpr parameters:
