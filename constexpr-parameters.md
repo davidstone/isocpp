@@ -554,8 +554,8 @@ Q. Is the following code valid?
 int runtime() { return 5; }
 auto foo(constexpr int n = runtime()) -> std::array<int, n> { return {}; }
 int main() {
-    foo(1); // OK
-    foo();  // ill-formed, presumably?
+	foo(1); // OK
+	foo();  // ill-formed, presumably?
 }
 ```
 
@@ -573,8 +573,8 @@ The following similar code would be valid in the first call and invalid in the s
 int runtime() { return 5; }
 auto foo(👨‍🌾constexpr👨‍🌾 int n = runtime()) -> std::array<int, n> { return {}; }
 int main() {
-    foo(1); // OK
-    foo();  // ill-formed because std::array<int, n> is ill-formed
+	foo(1); // OK
+	foo();  // ill-formed because std::array<int, n> is ill-formed
 }
 ```
 
