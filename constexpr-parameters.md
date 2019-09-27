@@ -49,14 +49,13 @@ These problems motivate this paper. By treating compile-time and run-time values
 
 ## Before and After
 
-<table>
+<pre><code><table>
 	<tr>
 		<th>Now (without this proposal)</th>
 		<th>The future (with this proposal)</th>
 	</tr>
 	<tr>
-		<td>
-<pre><code>auto a = std::array&lt;int, 2&gt;{};
+		<td>auto a = std::array&lt;int, 2&gt;{};
 a[0] = 1;
 a[1] = 5;
 a[2] = 3; // undefined behavior
@@ -64,10 +63,8 @@ a[2] = 3; // undefined behavior
 auto t = std::tuple&lt;int, std::string&gt;{};
 std::get&lt;0&gt;(t) = 1;
 std::get&lt;1&gt;(t) = "asdf";
-std::get&lt;2&gt;(t) = 3; // compile error</code></pre>
-		</td>
-		<td>
-<pre><code>auto a = std::array&lt;int, 2&gt;{};
+std::get&lt;2&gt;(t) = 3; // compile error</td>
+		<td>auto a = std::array&lt;int, 2&gt;{};
 a[0] = 1;
 a[1] = 5;
 a[2] = 3; // compile failure
@@ -75,100 +72,72 @@ a[2] = 3; // compile failure
 auto t = std::tuple&lt;int, std::string&gt;{};
 t[0] = 1;
 t[1] = "asdf";
-t[2] = 3; // compile failure</code></pre>
-		</td>
+t[2] = 3; // compile failure</td>
 	</tr>
 	<tr>
-		<td>
-			<pre><code>std::true_type{}</code></pre>
-		</td>
-		<td>
-			<pre><code>true</code></pre>
-		</td>
+		<td>std::true_type{}</td>
+		<td>true</td>
 	</tr>
 	<tr>
-		<td>
-<pre><code>std::integral_constant&lt;int, 24&gt;{}
+		<td>std::integral_constant&lt;int, 24&gt;{}
 std::constant&lt;int, 24&gt; // proposed
 std::constant&lt;24&gt; // discussed
 boost::hana::int_c&lt;24&gt;
-boost::mpl::int_&lt;24&gt;</code></pre>
-		</td>
-		<td>
-<pre><code>&nbsp;
+boost::mpl::int_&lt;24&gt;</td>
+		<td>&nbsp;
 &nbsp;
 24
 &nbsp;
-&nbsp;</code></pre>
-		</td>
+&nbsp;</td>
 	</tr>
 	<tr>
-		<td>
-<pre><code>template&lt;int n&gt;
-void f(boost::hana::int_&lt;n&gt;);</code></pre>
-		</td>
-		<td>
-<pre><code>&nbsp;
-f(constexpr int x);</code></pre>
-		</td>
+		<td>template&lt;int n&gt;
+void f(boost::hana::int_&lt;n&gt;);</td>
+		<td>&nbsp;
+f(constexpr int x);</td>
 	</tr>
 	<tr>
-		<td>
-<pre><code>0 &lt;=&gt; 1 == 0;
+		<td>0 &lt;=&gt; 1 == 0;
 // valid, as intended
 &nbsp;
 0 &lt;=&gt; 1 == nullptr;
 // valid, due to implementation detail
-&nbsp;
-</code></pre>
-		</td>
-		<td>
-<pre><code>0 &lt;=&gt; 1 == 0;
+&nbsp;</td>
+		<td>0 &lt;=&gt; 1 == 0;
 // valid, as intended
 &nbsp;
 0 &lt;=&gt; 1 == nullptr;
 // error: no overloaded operator== comparing
-// strong_equality with nullptr_t</code></pre>
-		</td>
+// strong_equality with nullptr_t</td>
 	</tr>
 	<tr>
-		<td>
-<pre><code>// Either all regex constructions have an
+		<td>// Either all regex constructions have an
 // extra pass over the input to determine the
 // parsing strategy, or...
 auto const r = std::regex("(A+|B+)*C");
 // exponential time against failed matches
 // starting with 'A' and 'B'.
-// https://swtch.com/~rsc/regexp/regexp1.html</code></pre>
-		</td>
-		<td>
-<pre><code>// Scan can be done at compile time, so...
+// https://swtch.com/~rsc/regexp/regexp1.html</td>
+		<td>// Scan can be done at compile time, so...
 &nbsp;
 &nbsp;
 auto const r = std::regex("(A+|B+)*C");
 // linear time against failed matches
 // starting with 'A' and 'B'.
-&nbsp;
-</code></pre>
-		</td>
+&nbsp;</td>
 	</tr>
 	<tr>
-		<td>
-<pre><code>auto const glob = std::regex("*");
+		<td>auto const glob = std::regex("*");
 // throws std::regex_error
 &nbsp;
-</code></pre>
-		</td>
-		<td>
-<pre><code>auto const glob = std::regex("*");
+&nbsp;</td>
+		<td>auto const glob = std::regex("*");
 // static_assert failed "Regular expression
 // token '*' must occur after a character to
-// repeat."</code></pre>
-		</td>
+// repeat."</td>
 	</tr>
 	<tr>
-		<td>
-<pre><code>static_assert(
+		<td>static_assert(
 	pow<3>(2_meters) == 8_cubic_meters
 );
 meters runtime_value;
@@ -176,10 +145,8 @@ std::cin &gt;&gt; runtime_value;
 auto const computed = pow<2>(runtime_value);
 if (computed &gt; 100_square_meters) {
 	throw std::exception{};
-}</code></pre>
-		</td>
-		<td>
-<pre><code>static_assert(
+}</td>
+		<td>static_assert(
 	pow(2_meters, 3) == 8_cubic_meters
 );
 meters runtime_value;
@@ -187,26 +154,16 @@ std::cin &gt;&gt; runtime_value;
 auto const computed = pow(runtime_value, 2);
 if (computed &gt; 100_square_meters) {
 	throw std::exception{};
-}</code></pre>
-		</td>
+}</td>
 	</tr>
 	<tr>
-		<td>
-<pre><code>// Do I want my code to work at compile time,
+		<td>// Do I want my code to work at compile time,
 // do I want my code to be fast, or do I try
 // to modify my compiler to recognize the
 // code and generate the right assembly at
 // run time when it is written in the
-// `constexpr` style?
-&nbsp;
-&nbsp;
-&nbsp;
-&nbsp;
-&nbsp;
-</code></pre>
-		</td>
-		<td>
-<pre><code>// From the <a href="https://groups.google.com/a/isocpp.org/forum/#!topic/std-proposals/RdAK-0RyiY0">std-proposals forum</a>
+// `constexpr` style?</td>
+		<td>// From the <a href="https://groups.google.com/a/isocpp.org/forum/#!topic/std-proposals/RdAK-0RyiY0">std-proposals forum</a>
 size_t strlen(constexpr char const * s) {
 	for (const char *p = s; ; ++p) {
 		if (*p == '\0') {
@@ -216,26 +173,15 @@ size_t strlen(constexpr char const * s) {
 }
 std::size_t strlen(char const * s) {
 	__asm__("SSE 4.2 insanity");
-}
-</code></pre>
-		</td>
+}</td>
 	</tr>
 	<tr>
-		<td>
-<pre><code>
-&nbsp;
-// Cannot write a function that transparently
-// uses this intrinsic where possible. Cannot
-// write a function that puts the parameters
-// in the correct order without resorting to
-// `integral_constant` business.
-&nbsp;
-&nbsp;
-&nbsp;
-</code></pre>
-		</td>
-		<td>
-			<pre><code>#include &lt;emmintrin.h&gt;
+		<td>// Cannot write a function that transparently
+// uses certain intrinsics where possible.
+// Cannot write a function that puts the
+// parameters in the correct order without
+// resorting to `integral_constant` business.</td>
+		<td>#include &lt;emmintrin.h&gt;
 &nbsp;
 void do_math(__v2di x, constexpr char z) {
 	__v2di y;
@@ -244,10 +190,9 @@ void do_math(__v2di x, constexpr char z) {
 	// argument to be a compile-time constant
 	x = __builtin_ia32_pclmulqdq128(x, y, z);
 	// ...
-}</code></pre>
-		</td>
+}</td>
 	</tr>
-</table>
+</table></code></pre>
 
 ## Background
 
