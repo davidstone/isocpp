@@ -435,7 +435,7 @@ It supports evaluating exactly once or 0-N times. It proposes allowing constexpr
 
 ## Syntax / Bikeshedding
 
-There are two language-level features being proposed by this paper: 1) allowing function parameters to be annotated in some way to allow them to be used at compile time within the function and require initialization from a constant expression, and 2) allowing function parameters to be annotated in some way to allow them to be used at compile time if they are initialized with a constant expression. This section will discuss the syntax for those two features.
+There are two language-level features being proposed by this paper: 1) allowing function parameters to be annotated in some way to allow them to be used at compile time within the function and require initialization from a constant expression, and 2) allowing function parameters to be annotated in some way to allow them to be used at compile time if they are initialized with a constant expression. This section will discuss the syntax for those two features. All of this paper other than this section will use `constexpr` with its current meaning and `👨‍🌾constexpr👨‍🌾` for "maybe constexpr" parameters to avoid confusion.
 
 ### `constexpr` and `consteval` today:
 
