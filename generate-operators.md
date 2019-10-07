@@ -381,9 +381,9 @@ These have only compound assignment operators.
 - `multimap::iterator`
 - `multiset::iterator`
 - `unordered_map::iterator`
-- `unodered_set::iterator`
+- `unordered_set::iterator`
 - `unordered_multimap::iterator`
-- `unodered_multiset::iterator`
+- `unordered_multiset::iterator`
 - `back_insert_iterator` (`++` only)
 - `front_insert_iterator` (`++` only)
 - `insert_iterator` (`++` only)
@@ -447,9 +447,9 @@ These have only compound assignment operators.
 - `multimap::iterator`
 - `multiset::iterator`
 - `unordered_map::iterator`
-- `unodered_set::iterator`
+- `unordered_set::iterator`
 - `unordered_multimap::iterator`
-- `unodered_multiset::iterator`
+- `unordered_multiset::iterator`
 - `valarray::iterator`
 - `reverse_iterator`
 - `back_insert_iterator` (`++` only)
