@@ -29,7 +29,7 @@ This paper has three primary design goals:
 
 ## Changes In This Revision
 
-R1: The original version proposed a particular model of `static` function variables. R1 discusses the problems in that original model under the section "Function static variables". R1 also adds more detail on how overload resolution is supposed to work under the section "Overload resolution". Added section "Further work needed". Propose a new syntax, including changing the meaning of `constexpr` on a variable declaration and supporting `consteval` variables.
+R1: The original version proposed a particular model of `static` function variables. R1 discusses the problems in that original model under the section "Function static variables". R1 also adds more detail on how overload resolution is supposed to work under the section "Overload resolution". Propose a new syntax, including changing the meaning of `constexpr` on a variable declaration and supporting `consteval` variables.
 
 ## No Shadow Worlds
 
@@ -533,16 +533,6 @@ constinit constexpr int x = foo();</code></pre>
 ### Option 2
 
 We keep things as they are today with regards to the meaning of `constexpr` and `consteval`. We allow annotating a function parameter with `constexpr` with the same meaning as a variable declaration: must be initialized with a constant expression. We add a new keyword, `maybe_constexpr`, that deduces whether the parameter is known at compile time. This paper originally proposed the syntax `constexpr?`. `consteval` was originally spelled as `constexpr!`, but `constexpr!` was rejected in favor of `consteval` for a variety of reasons, some of which also apply to `constexpr?`. One of the primary objections to names with punctuation is the question of how you pronounce the keyword. It would make spoken C++ be a tonal language, or else people will come up with a different name, such as "maybe constexpr". If people will come up with a different name for the keyword, we might as well name the keyword that name, thus `maybe_constexpr`.
-
-## Further work needed
-
-References and pointers declared `constexpr` or in template parameters currently have difficult to understand semantics. There is opportunity to simplify these rules through generalization. For example, under the current rules, is the following code valid?
-
-```
-constexpr int const & x = 42;
-```
-
-The answer is: it depends. If `x` is a global variable, yes. If `x` is a local variable, no. If you add in `static` (any of the meanings), then it becomes valid again. Cleaning this up will be the topic of another paper.
 
 ## FAQ
 
