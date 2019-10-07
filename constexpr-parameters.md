@@ -570,4 +570,13 @@ int main() {
 
 ## Summary
 
-The following represents a summary of all of the changes presented assuming we take my preferred suggestions.
+The following represents a summary of all of the changes presented assuming we take my preferred direction for all choices offered by the paper. All of this is targeted at C++23 unless otherwise specified.
+
+* Allow declaring a function parameter `consteval`, meaning that it can only be initialized as a compile-time constant and it is usable as a compile-time constant in the function.
+* Declaring an automatic variable `consteval` means that it must be initialized at compile time and can only be used at compile time.
+* Allow declaring a function parameter `constexpr`, meaning that if it is initialized as a compile-time constant, it is usable as a compile-time time constant in the function.
+* Declaring an automatic variable `constexpr` means that it can be used at compile time if it is initialized at compile time, and it can always be used at run time.
+* Allow overloading between `consteval` and unannotated parameters.
+* Add a library function `std::is_constant_expression` that can be used on any expression and returns whether that expression is a constant expression.
+* For C++20: Allow declaring a `constexpr` variable with the `constinit` keyword. It was not allowed simply because it is redundant under the current rules. Allowing this combination in C++20 gives users a migration path to maintain current behavior. This is unnecessary if we decide to not change the meaning of `constexpr` on automatic storage duration variables.
+* For C++20: Adopt "Fixing inconsistencies between `constexpr` and `consteval` functions".
