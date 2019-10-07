@@ -1,9 +1,11 @@
 # Automatically Generate More Operators
 
+```
 Document Number: D1046R1
 Date: 2019-09-26
 Author: David Stone (david.stone@uber.com, david@doublewise.net)
 Audience: Evolution Working Group (EWG), Library Evolution Working Group (LEWG)
+```
 
 ## Summary
 
@@ -628,7 +630,7 @@ Other than the first question (which is both language and library), all of these
 
 The following sections are operators that were evaluated, but for which there is not a recommendation to change.
 
-### Subscript (`[]`)
+### Subscript (`operator[]`)
 
 The subscript operator is a bit trickier. The problem here is that there are actually at least three different subscript operators with the same syntax. The first subscript operator is the subscript operator of iterators: `it[n]` is equivalent to `*(it + n)`. The second subscript operator is the subscript operator of random-access ranges: `range[n]` is equivalent to `begin(range)[n]`. The third subscript operator is lookup into an associative container: `dictionary[key]` is equivalent to `*dictionary.emplace(key).first`. This gets even more complicated when you consider that a type can model both a random-access range and an associative container (for instance: `flat_map`).
 
