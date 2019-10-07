@@ -151,7 +151,7 @@ Because this proposal works in terms of expression rewrites, there is a pitfall 
 ```
 [&] {
 	auto && __temp = lhs;
-	return __temp = std::move(__temp) @ rhs;
+	return static_cast<decltype(__temp)>(__temp) = std::move(__temp) @ rhs;
 }()
 ```
 
