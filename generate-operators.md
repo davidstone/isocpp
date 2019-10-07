@@ -5,10 +5,6 @@ Date: 2019-09-26
 Author: David Stone (david.stone@uber.com, david@doublewise.net)
 Audience: Evolution Working Group (EWG), Library Evolution Working Group (LEWG)
 
-## TODO
-
-Still need to do full library analysis of prefix `++` and `--`.
-
 ## Summary
 
 This proposal follows the lead of `operator<=>` (see [Consistent Comparison](http://open-std.org/JTC1/SC22/WG21/docs/papers/2017/p0515r3.pdf)) by generating rewrite rules if a particular operator does not exist in current code. All of these operators would support `= default` to explicitly opt in and `= delete` to explicitly opt out.
