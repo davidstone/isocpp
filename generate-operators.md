@@ -487,9 +487,6 @@ Given the path we took for `operator<=>` of removing manual definitions of opera
 - "bitmask type": `^=`, `&=`, `|=` can be removed from the exposition
 - `byte`: `^=`, `&=`, `|=`, `<<=`, `>>=`
 - `bitset`: `^=`, `&=`, `|=`, `<<=`, `>>=`
-
-#### Types that wrap another type and forward to its `+`, `+=`, `-`, and `-=`
-
 - `reverse_iterator`
 - `move_iterator`
 - `counted_iterator`
@@ -497,7 +494,7 @@ Given the path we took for `operator<=>` of removing manual definitions of opera
 - `chrono::duration` (also `*=`, `/=`, `%=`)
 - `chrono::time_point`
 
-All of these types have an `operator+` that calls some underlying type's `operator+` and an `operator+=` that call some underlying type's `operator+=`. We will have to decide whether we want to here. It is important to note that the new `random_access_iterator` concept and the `Cpp17RandomAccessIterator` requirements table already state that if your type is a random access iterator, the two operations must be equivalent (for some definition of equivalence). Also note that despite `elements_view::iterator` wrapping a user-defined iterator, it always calls `+=`.
+The specification of the iterator adapters (other than `elements_view::iterator`) have an `operator+` that calls some underlying type's `operator+` and an `operator+=` that call some underlying type's `operator+=`. The new `random_access_iterator` concept and the old `Cpp17RandomAccessIterator` requirements table already state that if your type is a random access iterator, the two operations must be equivalent, which should mean the two are interchangeable. `elements_view::iterator` wraps a user-defined iterator is currently specified as always calling `+=`.
 
 For `chrono::duration`, the standard states that its template parameter "`Rep` shall be an arithmetic type or a class emulating an arithmetic type". It is unclear how true this emulation must be, but presumably it requires that arithmetic operations have the usual equivalences, in which case it should not matter which specific operators are called.
 
@@ -733,15 +730,12 @@ All types in this section have an `operator->` that is identical to the synthesi
 - `match_results::iterator`
 - `regex_iterator`
 - `regex_token_iterator`
-
-#### Types that defer to a wrapped `operator->` if it exists
-
 - `reverse_iterator`
 - `common_iterator`
-- `filter_view::iterator` (effectively, it returns the iterator itself from `operator->`)
-- `join_view::iterator` (effectively, it returns the iterator itself from `operator->`)
+- `filter_view::iterator`
+- `join_view::iterator`
 
-All of these types currently define their `operator->` as deferring to the base iterator's `operator->`. However, the Cpp17InputIterator requirements specify that `a->m` is exactly equivalent to `(*a).m`, so anything a user passes to `reverse_iterator` must already meet this. The other three iterators are new in C++20 and require `input_or_output_iterator` of their parameter, which says nothing about `->`. This means that based on what we have promised about our interfaces, we could implement all of these under the language proposal if we change `common_iterator`, `filter_view::iterator`, and `join_view::iterator` for C++20.
+All of these types currently define their `operator->` as deferring to the base iterator's `operator->`. However, the Cpp17InputIterator requirements specify that `a->m` is equivalent to `(*a).m`, so anything a user passes to `reverse_iterator` must already meet this. `common_iterator`, `filter_view::iterator`, and `join_view::iterator` are new in C++20 and require `input_or_output_iterator` of their parameter, which says nothing about `->`. This means that based on what we have promised about our interfaces, we could implement all of these under the language proposal without breaking compatibility if we change those three for C++20. They would be changed to return `addressof(**this)`
 
 #### `iterator_traits`
 
@@ -778,9 +772,7 @@ However, none of them are specified to have member `to_address`.
 
 ## Summary of open questions
 
-- For iterator adaptors, `chrono::duration`, and `chrono::time_point`, they currently have their `operator@=` defer to some user-defined type's `operator@=`, but we appear to have text requiring that to be equivalent to `operator@`. Do we want to maintain this wrapping behavior for all of those types, none of those types, or make a change to C++20 for `transform_view::iterator` and `counted_iterator` to make them not wrap?
 - Should `ostream_iterator` and `ostreambuf_iterator` be changed to return by value from postfix `operator++`?
-- Should `reverse_iterator`, `common_iterator`, `filter_view::iterator`, and `join_view::iterator` continue to call an underlying iterator type's `operator->` in their `operator->` if it exists? If not, should we remove such functionality from C++20 for `common_iterator`, `filter_view::iterator`, and `join_view::iterator` and define them as returning `addressof(**this)`? This would technically not be a breaking change because we never promised for `reverse_iterator` that the implementation isn't already doing what the language proposal suggests.
 - How should `iterator_traits<I>::pointer` be defined? a) Do nothing => get a `void` typedef for types that use the language feature. b) Specify a further fallback => `decltype(std::addressof(*a))`. c) Deprecate the typedef.
 - How should `std::to_address` be defined?
 
