@@ -40,72 +40,76 @@ One of the primary goals of this paper is that users should have very little rea
 
 For all binary arithmetic and bitwise operators, there are corresponding compound assignment operators. There are two obvious ways to implement these pairs of operators without code duplication: implement `a += b` in terms of `a = a + b` or implement `a = a + b` in terms of `a += b`. Using the compound assignment operator as the basis has a tradition going back to C++98, so let's consider what that code looks like using `string` as our example:
 
-    string & operator+=(string & lhs, string const & rhs) {
-    	lhs.append(rhs);
-    	return lhs;
-    }
-    string & operator+=(string & lhs, string && rhs) {
-    	if (lhs.size() + rhs.size() <= lhs.capacity()) {
-    		lhs.append(rhs);
-    		return lhs;
-    	} else {
-    		rhs.insert(0, lhs);
-    		lhs = std::move(rhs);
-    		return lhs;
-    	}
-    }
+```
+string & operator+=(string & lhs, string const & rhs) {
+	lhs.append(rhs);
+	return lhs;
+}
+string & operator+=(string & lhs, string && rhs) {
+	if (lhs.size() + rhs.size() <= lhs.capacity()) {
+		lhs.append(rhs);
+		return lhs;
+	} else {
+		rhs.insert(0, lhs);
+		lhs = std::move(rhs);
+		return lhs;
+	}
+}
 
-    string operator+(string const & lhs, string const & rhs) {
-    	string result;
-    	result.reserve(lhs.size() + rhs.size());
-    	result = lhs;
-    	result.append(rhs);
-    	return result;
-    }
-    string operator+(string const & lhs, string && rhs) {
-    	rhs.insert(0, lhs);
-    	return rhs;
-    }
-    template<typename String> requires std::same_as<std::decay_t<String>, string>
-    string operator+(string && lhs, String && rhs) {
-    	lhs += std::forward<String>(rhs);
-    	return lhs;
-    }
+string operator+(string const & lhs, string const & rhs) {
+	string result;
+	result.reserve(lhs.size() + rhs.size());
+	result = lhs;
+	result.append(rhs);
+	return result;
+}
+string operator+(string const & lhs, string && rhs) {
+	rhs.insert(0, lhs);
+	return rhs;
+}
+template<typename String> requires std::same_as<std::decay_t<String>, string>
+string operator+(string && lhs, String && rhs) {
+	lhs += std::forward<String>(rhs);
+	return lhs;
+}
+```
 
 This does not seem to save us as much as we might like. We can have a single template definition of `string + string` when we take an rvalue for the left-hand side argument, but when we have an lvalue as our left-hand side we need to write two more overloads (neither of which really benefits from `operator+=`). It may seem tempting at first to take this approach due to historical advice, but taking advantage of move semantics eliminates most code savings. This does not feel like a generic answer to defining one class of operators.
 
 What happens if we try to use `operator+` as the basis for our operations? The initial reason that C++03 code typically defined its operators in terms of `operator+=` was for efficiency, but with the addition of move semantics to C++11, we can regain this efficiency. What does the ideal `string + string` implementation look like?
 
-    // Same as in the previous example
-    string operator+(string const & lhs, string const & rhs) {
-    	string result;
-    	result.reserve(lhs.size() + rhs.size());
-    	result = lhs;
-    	result.append(rhs);
-    	return result;
-    }
-    // Same as in the previous example
-    string operator+(string const & lhs, string && rhs) {
-    	rhs.insert(0, lhs);
-    	return rhs;
-    }
-    // Very similar to the equivalent in the previous example
-    string operator+(string && lhs, string const & rhs) {
-    	lhs.append(rhs);
-    	return lhs;
-    }
-    // Compare to previous example's operator+=(string &, string &&)
-    string operator+(string && lhs, string && rhs) {
-    	return (lhs.size() + rhs.size() <= lhs.capacity()) ?
-    		std::move(lhs) + std::as_const(rhs) :
-    		std::as_const(lhs) + std::move(rhs);
-    }
+```
+// Same as in the previous example
+string operator+(string const & lhs, string const & rhs) {
+	string result;
+	result.reserve(lhs.size() + rhs.size());
+	result = lhs;
+	result.append(rhs);
+	return result;
+}
+// Same as in the previous example
+string operator+(string const & lhs, string && rhs) {
+	rhs.insert(0, lhs);
+	return rhs;
+}
+// Very similar to the equivalent in the previous example
+string operator+(string && lhs, string const & rhs) {
+	lhs.append(rhs);
+	return lhs;
+}
+// Compare to previous example's operator+=(string &, string &&)
+string operator+(string && lhs, string && rhs) {
+	return (lhs.size() + rhs.size() <= lhs.capacity()) ?
+		std::move(lhs) + std::as_const(rhs) :
+		std::as_const(lhs) + std::move(rhs);
+}
 
-    template<typename String> requires std::same_as<std::decay_t<String>, string>
-    string & operator+=(string & lhs, String && rhs) {
-    	lhs = std::move(lhs) + std::forward<String>(rhs);
-    	return lhs;
-    }
+template<typename String> requires std::same_as<std::decay_t<String>, string>
+string & operator+=(string & lhs, String && rhs) {
+	lhs = std::move(lhs) + std::forward<String>(rhs);
+	return lhs;
+}
+```
 
 This mirrors the implementation if `operator+=` is the basis operation: we still end up with five functions in our interface. One important difference between the two is that in the first case, where `operator+=` is the basis operation, we needed to define `operator+=` and `operator+`. Defining only `operator+=` and trying to generically define `operator+` in terms of that gives us an inefficiently generated `operator+`. In the second case, however, we need to define only `operator+` specially, and our one `operator+=` overload will be maximally efficient.
 
@@ -119,26 +123,32 @@ The third counterexample is all types that are not assignable (for instance, if 
 
 Let's look a little closer at our `operator+=` implementation that is based on `operator+` and see if we can lift the concepts used to make the operation more generic. For strings, we wrote this:
 
-    template<typename String> requires std::same_as<std::decay_t<String>, string>
-    string & operator+=(string & lhs, String && rhs) {
-    	lhs = std::move(lhs) + std::forward<String>(rhs);
-    	return lhs;
-    }
+```
+template<typename String> requires std::same_as<std::decay_t<String>, string>
+string & operator+=(string & lhs, String && rhs) {
+	lhs = std::move(lhs) + std::forward<String>(rhs);
+	return lhs;
+}
+```
 
 The first obvious improvement is that the types should not be restricted to be the same type. Users expect that if `string = string + string_view` compiles, so does `string += string_view`. We are also not using anything string specific in this implementation, and our goal is to come up with a single `operator+=` that works for all types. With this, we end up with:
 
-    template<typename LHS, typename RHS>
-    LHS & operator+=(LHS & lhs, RHS && rhs) {
-    	lhs = std::move(lhs) + std::forward<RHS>(rhs);
-    	return lhs;
-    }
+```
+template<typename LHS, typename RHS>
+LHS & operator+=(LHS & lhs, RHS && rhs) {
+	lhs = std::move(lhs) + std::forward<RHS>(rhs);
+	return lhs;
+}
+```
 
 Are there any improvements we can make to this signature? One possible problem is that we unconditionally return a reference to the lhs, regardless of the behavior of the assignment operator. This is what is commonly done, but there are some use cases for not doing so. The most compelling example might be `std::atomic`, which returns `T` instead of `atomic<T>` in `atomic<T> = T`, and this behavior is reflected in the current compound assignment operators. An improvement to our previous signature, therefore, is the following implementation:
 
-    template<typename LHS, typename RHS>
-    decltype(auto) operator+=(LHS & lhs, RHS && rhs) {
-    	return lhs = std::move(lhs) + std::forward<RHS>(rhs);
-    }
+```
+template<typename LHS, typename RHS>
+decltype(auto) operator+=(LHS & lhs, RHS && rhs) {
+	return lhs = std::move(lhs) + std::forward<RHS>(rhs);
+}
+```
 
 Now our compound assignment operator returns whatever the assignment operator returns. We have a technical reason to make this change, but does it match up with our expectations? Conceptually, `operator+=` should perform an addition followed by an assignment, so it seems reasonable to return whatever assignment returns, and this mirrors the (only?) type in the standard library that returns something other than `*this` from its assignment operator. This is also the behavior that would naturally fall out of using a rewrite rule such that the expression `lhs += rhs` is rewritten to `lhs = std::move(lhs) + rhs`, which is what is proposed by this paper.
 
@@ -161,60 +171,70 @@ There is one major remaining question here: how does this interact with allocato
 
 With an eye toward allocators, let's look again at the case of `string` and the operator overloads (with minor modifications to our example code to match the current specification of `operator+` with regards to allocators):
 
-    string operator+(string const & lhs, string const & rhs) {
-    	string result(allocator_traits::select_on_container_copy_construction(lhs.get_allocator()));
-    	result.reserve(lhs.size() + rhs.size());
-    	result.append(lhs);
-    	result.append(rhs);
-    	return result;
-    }
-    string operator+(string && lhs, string const & rhs) {
-    	lhs.append(rhs);
-    	return lhs;
-    }
-    string operator+(string const & lhs, string && rhs) {
-    	rhs.insert(0, lhs);
-    	return rhs;
-    }
-    string operator+(string && lhs, string && rhs) {
-    	return (lhs.size() + rhs.size() <= lhs.capacity() or lhs.get_allocator() != rhs.get_allocator()) ?
-    		std::move(lhs) + std::as_const(rhs) :
-    		std::as_const(lhs) + std::move(rhs);
-    }
+```
+string operator+(string const & lhs, string const & rhs) {
+	string result(allocator_traits::select_on_container_copy_construction(lhs.get_allocator()));
+	result.reserve(lhs.size() + rhs.size());
+	result.append(lhs);
+	result.append(rhs);
+	return result;
+}
+string operator+(string && lhs, string const & rhs) {
+	lhs.append(rhs);
+	return lhs;
+}
+string operator+(string const & lhs, string && rhs) {
+	rhs.insert(0, lhs);
+	return rhs;
+}
+string operator+(string && lhs, string && rhs) {
+	return (lhs.size() + rhs.size() <= lhs.capacity() or lhs.get_allocator() != rhs.get_allocator()) ?
+		std::move(lhs) + std::as_const(rhs) :
+		std::as_const(lhs) + std::move(rhs);
+}
 
-    template<typename LHS, typename RHS>
-    decltype(auto) operator+=(LHS & lhs, RHS && rhs) {
-    	return lhs = std::move(lhs) + std::forward<RHS>(rhs);
-    }
+template<typename LHS, typename RHS>
+decltype(auto) operator+=(LHS & lhs, RHS && rhs) {
+	return lhs = std::move(lhs) + std::forward<RHS>(rhs);
+}
+```
 
 Our goal here is to make sure that given the proper definitions of `operator+`, our generic definition of `operator+=` will still do the correct thing. This is somewhat tricky, so we'll walk through this step by step. First, let's consider the case where `rhs` is `string const &`. We end up with this instantiation:
 
-    string & operator+=(string & lhs, strong const & rhs) {
-    	return lhs = std::move(lhs) + rhs;
-    }
+```
+string & operator+=(string & lhs, strong const & rhs) {
+	return lhs = std::move(lhs) + rhs;
+}
+```
 
 That will call this overload of `operator+`:
 
-    string operator+(string && lhs, string const & rhs) {
-    	lhs.append(rhs);
-    	return lhs;
-    }
+```
+string operator+(string && lhs, string const & rhs) {
+	lhs.append(rhs);
+	return lhs;
+}
+```
 
 Before calling this function, nothing has changed with allocators because all we have done is bound variables to references. Inside the function, we make use of the allocator associated with `lhs`, if necessary, which is exactly what we want (the final object will be `lhs`). We then return `lhs`, which move constructs the return value. Move construction is guaranteed to move in the allocator, so our resulting value has the same allocator as `lhs` did at the start of the function. Going back up the stack, we then move assign this constructed string back into `lhs`. This will be fast because those allocators compare equal. This is true regardless of the value of `propagate_on_container_move_assignment`, since propagation is unnecessary due to the equality.
 
 The other case to consider is when `rhs` is `string &&`. Let's walk through the same exercise:
 
-    string & operator+=(string & lhs, strong && rhs) {
-    	return lhs = std::move(lhs) + std::move(rhs);
-    }
+```
+string & operator+=(string & lhs, strong && rhs) {
+	return lhs = std::move(lhs) + std::move(rhs);
+}
+```
 
 That will call this overload of `operator+`:
 
-    string operator+(string && lhs, string && rhs) {
-    	return (lhs.size() + rhs.size() <= lhs.capacity() or lhs.get_allocator() != rhs.get_allocator()) ?
-    		std::move(lhs) + std::as_const(rhs) :
-    		std::as_const(lhs) + std::move(rhs);
-    }
+```
+string operator+(string && lhs, string && rhs) {
+	return (lhs.size() + rhs.size() <= lhs.capacity() or lhs.get_allocator() != rhs.get_allocator()) ?
+		std::move(lhs) + std::as_const(rhs) :
+		std::as_const(lhs) + std::move(rhs);
+}
+```
 
 If `lhs` has enough capacity for the resulting object, we forward to the same overload we just established as being correct for our purposes. If the allocators are different, it means we care which allocator we use, and so we should also fall back to that same overload. In that second branch, we end up returning `rhs` with its allocator, but this is acceptable because we know the allocators are equal.
 
@@ -230,11 +250,13 @@ For "bitset" types, the expressions `lhs << rhs` and `lhs >> rhs` mean something
 
 To ensure that we are not generating code that is difficult to optimize, it can be helpful to consider a simple `vector3d` class:
 
-    struct vector3d {
-    	double x;
-    	double y;
-    	double z;
-    };
+```
+struct vector3d {
+	double x;
+	double y;
+	double z;
+};
+```
 
 This example uses a struct with three data members, but the generated code is identical for a struct containing a single array data member.
 
@@ -342,10 +364,12 @@ For `chrono::duration`, the standard states that its template parameter "`Rep` s
 
 If we define `operator+` for this type, we could then get rid of `operator+=`. Pros: increased uniformity and better support for functional programming styles. Cons: Would make the following code valid:
 
-    std::list<char> range{0, 1, 2, 3, 4, 5};
-    std::filesystem::path p = "101";
-    std::regex(range.begin() + p);
-    // Note: This code is already valid if you replace `+` with `/`
+```
+std::list<char> range{0, 1, 2, 3, 4, 5};
+std::filesystem::path p = "101";
+std::regex(range.begin() + p);
+// Note: This code is already valid if you replace `+` with `/`
+```
 
 The synthesized version of `operator/=` is correct for `filesystem::path`.
 
