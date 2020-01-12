@@ -28,7 +28,19 @@ This proposal follows the lead of `operator<=>` (see [Consistent Comparison](htt
 
 ## Revision History
 
-Changes in R1: Added `operator->*`. Added more detail on how postfix operators would work. Updated section on allocators in light of recent changes to the standard from P1165. Update some code examples to take advantage of implicit moves from rvalue references. Added standard library impact. Added discussion on other options for postfix `operator++` and `operator--`.
+### Changes in R1
+
+* Added `operator->*`.
+* Added more detail on how postfix operators would work.
+* Updated section on allocators in light of recent changes to the standard from P1165.
+* Updated some code examples to take advantage of implicit moves from rvalue references.
+* Added standard library impact.
+* Added discussion on other options for postfix `operator++` and `operator--`.
+
+### Changes in R2
+
+* Postfix `operator++` and `operator--` return `void` for non-copyable types.
+* Added "Approaches considered"
 
 ## Design Goals
 
