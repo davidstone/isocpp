@@ -458,6 +458,13 @@ These have only compound assignment operators.
 - `regex_iterator` (`++` only)
 - `regex_token_iterator` (`++` only)
 
+#### Would gain `operator++` and `operator--`
+
+- `complex`
+- `atomic<floating_point>`
+
+These types support `lhs += 1` and `lhs -= 1`, and their underlying type supports `++a` and `--a`. Discussion on the reflector did not turn up any reason for this to not be present, just that it wasn't deemed particularly useful.
+
 #### Needs to keep existing version because the rewrite would not compile
 
 - `chrono::duration`
@@ -476,11 +483,6 @@ These have only compound assignment operators.
 - `mask_array`
 - `indirect_array`
 - `filesystem::path` (`operator++` only)
-
-#### Does not have `operator++` or `operator--` and unclear whether it should have it
-
-- `complex`
-- `atomic<floating_point>`
 
 ### Postfix `operator++` and `operator--`
 
@@ -660,7 +662,6 @@ However, none of them are specified to have member `to_address`.
 ## Summary of open questions
 
 - For iterator adaptors, `chrono::duration`, and `chrono::time_point`, they currently have their `operator@=` defer to some user-defined type's `operator@=`, but we appear to have text requiring that to be equivalent to `operator@`. Do we want to maintain this wrapping behavior for all of those types, none of those types, or make a change to C++20 for `transform_view::iterator` and `counted_iterator` to make them not wrap?
-- Should `complex` and `atomic<floating_point>` have `operator++` and `operator--`? They both support `a += 1` and their underlying type supports `++b`.
 - Should `ostream_iterator` and `ostreambuf_iterator` be changed to return by value from postfix `operator++`?
 - Should `reverse_iterator`, `common_iterator`, `filter_view::iterator`, and `join_view::iterator` continue to call an underlying iterator type's `operator->` in their `operator->` if it exists? If not, should we remove such functionality from C++20 for `common_iterator`, `filter_view::iterator`, and `join_view::iterator` and define them as returning `addressof(**this)`? This would technically not be a breaking change because we never promised for `reverse_iterator` that the implementation isn't already doing what the language proposal suggests.
 - How should `iterator_traits<I>::pointer` be defined? a) Do nothing => get a `void` typedef for types that use the language feature. b) Specify a further fallback => `decltype(std::addressof(*a))`. c) Deprecate the typedef.
