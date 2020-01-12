@@ -772,7 +772,7 @@ However, none of them are specified to have member `to_address`.
 
 ## Summary of open questions
 
-- Should `ostream_iterator` and `ostreambuf_iterator` be changed to return by value from postfix `operator++`?
+- Should `ostream_iterator` and `ostreambuf_iterator` be changed to return void from postfix `operator++`?
 - How should `iterator_traits<I>::pointer` be defined? a) Do nothing => get a `void` typedef for types that use the language feature. b) Specify a further fallback => `decltype(std::addressof(*a))`. c) Deprecate the typedef.
 - How should `std::to_address` be defined?
 
