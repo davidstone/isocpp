@@ -294,9 +294,35 @@ Rewrite `++a` as `a += 1`, and rewrite `--a` as `a -= 1`.
 
 ### Recommendation
 
-Rewrite `a++` as something like `[&]{ auto __temp = a; ++a; return __temp; }()` with guaranteed NRVO (in other words, there is a single copy performed but no moves) and rewrite `a--` as something like `[&]{ auto __temp = a; --a; return __temp; }()` with guaranteed NRVO. This will work for most normal types, but fails to compile for `std::atomic` because `std::atomic` is non-copyable (the full list is in the library impact section). This is fine, because `std::atomic` would need to provide different functionality by returning a copy of the original `T`, rather than a copy of the original `std::atomic<T>`, so failing to compile is the correct outcome here.
+Rewrite `a++` as something like
 
-There are several iterator adaptors added in C++20 that have a postfix `operator++` that returns `void` if the iterator they are adapting is not copyable (the `input_iterator` concept no longer requires copyability), and otherwise behave the same as prefix `operator++`. Is this behavior we would want to standardize at the language level? If so, this would simplify a lot of library specification, and if we believe this is an appropriate pattern for users to follow as well it seems to be the right thing to do. It is generally expected that prefix and postfix increment / decrement have the same effects on the object and differ only in their return type, and it is generally acceptable to change a return type from `void` to something else, so this would be unlikely to silently add a behavior that would need to be changed by the library author in the future. If we don't think this is a good solution at the language level, maybe we should reconsider that behavior in the library.
+```
+[&] {
+	if constexpr (std::is_copy_constructible_v<std::remove_reference_t<decltype(a)>>) {
+		auto __previous = a;
+		++a;
+		return __previous;
+		// with guaranteed NRVO (one copy, zero moves)
+	} else {
+		++a;
+	}
+}()
+```
+
+and rewrite `a--` as something like
+
+```
+[&] {
+	if constexpr (std::is_copy_constructible_v<std::remove_reference_t<decltype(a)>>) {
+		auto __previous = a;
+		--a;
+		return __previous;
+		// with guaranteed NRVO (one copy, zero moves)
+	} else {
+		--a;
+	}
+}()
+```
 
 ## Member of pointer (`->`)
 
@@ -458,7 +484,7 @@ These have only compound assignment operators.
 
 ### Postfix `operator++` and `operator--`
 
-#### Types that have the operator now and it behaves the same as the synthesized operator even if postfix does not work for non-copyable types
+#### Types that have the operator now and it behaves the same as the synthesized operator
 
 - `basic_string::iterator`
 - `array::iterator`
@@ -488,9 +514,6 @@ These have only compound assignment operators.
 - `chrono::weekday`
 - `regex_iterator` (`++` only)
 - `regex_token_iterator` (`++` only)
-
-#### Types that have the operator now and it behaves the same as the synthesized operator only if postfix returns `void` for non-copyable types
-
 - `move_iterator`
 - `iota_view::iterator`
 - `filter_view::iterator`
@@ -501,14 +524,12 @@ These have only compound assignment operators.
 - `basic_istream_view::iterator`
 - `elements_view::iterator`
 
-`basic_istream_view` always returns `void` from its postfix `operator++`. The others wrap another iterator type and always call the prefix `operator++` or `operator--` (where applicable) on the wrapped type. If the type they are wrapping does not meet `forward_iterator` (it is an `input_iterator` only), then they return `void` from their postfix `operator++` (`input_iterator` does not support `operator--` so it does not get special treatment), otherwise they return `*this` by reference.
-
 #### Types that defer to a wrapped postfix `++` for iterators that do not meet `forward_iterator`
 
 - `common_iterator`
 - `counted_iterator`
 
-Regardless of what happens with this proposal, these types sometimes return their own type and call the wrapped type's prefix `operator++`, and returns the result of calling the wrapped type's postfix `operator++`. This is an inconsistent design that probably deserves further discussion.
+Regardless of what happens with this proposal, these types sometimes return their own type and call the wrapped type's prefix `operator++`, and sometimes returns the result of calling the wrapped type's postfix `operator++`. This is an inconsistent design that probably deserves further discussion.
 
 #### Types that return a reference from postfix `++`
 
@@ -526,7 +547,7 @@ Regardless of what happens with this proposal, these types sometimes return thei
 - `atomic_ref`
 - `atomic`
 
-These overloads would need to stay. The postfix operators return a copy of the underlying value as it was before the increment. Under the language rules of this proposal, if the manual postfix operators were removed from `std::atomic`, the postfix operator would either not exist (because atomics are non-copyable) or they would return `void` instead (depending on how we resolve this issue). If the manual postfix operators were removed from `atomic_ref`, it would return a copy of the `atomic_ref` rather than the value.
+These overloads would need to stay. The postfix operators return a copy of the underlying value as it was before the increment. Under the language rules of this proposal, if the manual postfix operators were removed from `std::atomic`, the postfix operator would return `void` instead. If the manual postfix operators were removed from `atomic_ref`, it would return a copy of the `atomic_ref` rather than the value.
 
 ### `operator->`
 
@@ -638,9 +659,6 @@ However, none of them are specified to have member `to_address`.
 
 ## Summary of open questions
 
-Other than the first question (which is both language and library), all of these questions are library questions.
-
-- Should we synthesize a postfix `operator++` and `operator--` that return `void` for types that have the prefix version but are non-copyable? If not, should we remove such overloads from C++20 for the iterator adapter types mentioned in that section of this paper?
 - For iterator adaptors, `chrono::duration`, and `chrono::time_point`, they currently have their `operator@=` defer to some user-defined type's `operator@=`, but we appear to have text requiring that to be equivalent to `operator@`. Do we want to maintain this wrapping behavior for all of those types, none of those types, or make a change to C++20 for `transform_view::iterator` and `counted_iterator` to make them not wrap?
 - Should `complex` and `atomic<floating_point>` have `operator++` and `operator--`? They both support `a += 1` and their underlying type supports `++b`.
 - Should `ostream_iterator` and `ostreambuf_iterator` be changed to return by value from postfix `operator++`?
