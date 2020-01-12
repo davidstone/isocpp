@@ -340,6 +340,111 @@ Same reasoning as `operator->`.
 
 Rewrite `lhs->*rhs` as `(*lhs).*rhs`.
 
+## Other approaches considered
+
+As a companion to this paper, I have implemented the approaches that are possible in standard C++ in https://github.com/davidstone/operators. This section will describe the general outline of several possible solutions in this problem space, including example code using the operators library.
+
+### Automatically generated
+
+This is the approach recommended by this paper. It is intended to work the same way as the comparison operators work in C++20, where the existence of a base operation or set of operations (`operator==` and `operator<=>` in the case of comparisons) is used as a rewrite target for some other operator (for instance, `operator<`). Other than writing those base operators, there is no additional syntax required to opt in, and the user can use `= delete` to opt out.
+
+This requires language support.
+
+### Generated with `= default`
+
+This is similar to the more implicit approach above, except that users must additionally type something like
+
+```
+auto operator+=(Type &, Type const &) = default;
+auto operator+=(Type &, Type &&) = default;
+```
+
+to get the operator generated / synthesized.
+
+This requires language support.
+
+### Use using declarations
+
+This gives users a simple way to opt-in to specific operators for all types in their namespace. Unlike a using directive (`using namespace operators;`), a using declaration (`using operators::operator+=;`) actually puts the function declaration in your namespace for purposes of ADL. Using the operators library, user code looks like:
+
+```
+namespace user {
+
+using operators::operator+=;
+using operators::operator-=;
+using operators::operator*=;
+using operators::operator/=;
+using operators::operator%=;
+using operators::operator<<=;
+using operators::operator>>=;
+using operators::operator&=;
+using operators::operator|=;
+using operators::operator^=;
+
+struct type1 {
+	// define binary arithmetic operators as friends or members here
+};
+// Or as non-member non-friends here
+struct type2 {
+	// define binary arithmetic operators as friends or members here
+};
+// Or as non-member non-friends here
+
+} // namespace user
+```
+
+This does not require language support. This has the advantage that users can write code once that applies to all of their types. This can be further factored into a single include file for easy reuse through the user's code. The operators library also provides a macro for the bundle of all compound assignment operators: `OPERATORS_IMPORT_COMPOUND_ASSIGNMENT`. This cannot be used to implement `operator->` because that operator cannot be defined as a free function.
+
+### Derive from a library type
+
+This gives users a simple way to opt-in to specific operators for a specific type. Using the magic of ADL, it is possible for this solution to not even require CRTP for most operators; users can derive from a normal base class. Using the operators library, it looks like:
+
+```
+struct my_type : operators::compound_assignment {
+	// define binary arithmetic operators as friends or members here
+};
+// Or as non-member non-friends here
+
+struct wants_plus_equal_only : operators::plus_equal {
+	// define binary operator+ as friend or member here
+};
+// Or as non-member non-friend here
+
+struct wants_arrow : operators::arrow<wants_arrow> {
+	// define unary operator* as friend or member here
+};
+// Or as non-member non-friend here
+
+struct dereference_returns_value : operators::arrow_proxy<dereference_returns_value> {
+	// define unary operator* as friend or member here
+};
+// Or as non-member non-friend here
+```
+
+Because `operator->` cannot be defined as a free function, it cannot use the ADL-based solutions that the other operators can use, and thus it requires a CRTP base class.
+
+This does not require language support. This cannot solve all of the problems solved by a language solution for `operator->`, as shown in the example. In particular, a library solution will always have shortcomings related to `operator*` that returns by value.
+
+### Put a macro in your class body
+
+This gives users a simple way to opt-in to specific operators for a specific type. Using the operators library, it looks like:
+
+```
+struct wants_arrow {
+	OPERATORS_ARROW_DEFINITIONS
+	// define unary operator* as friend or member here
+};
+// Or as non-member non-friend here
+
+struct dereference_returns_value {
+	OPERATORS_ARROW_PROXY_DEFINITIONS
+	// define unary operator* as friend or member here
+};
+// Or as non-member non-friend here
+```
+
+This does not require language support. The one advantage this has over the base class version above is that it does not require re-typing your class name for the `operator->` case.
+
 ## Library impact
 
 Given the path we took for `operator<=>` of removing manual definitions of operators that can be synthesized and assuming we want to continue with that path by approving ["Do not promise support for function syntax of operators"](http://www.open-std.org/jtc1/sc22/wg21/docs/papers/2019/p1732r1.pdf), this will allow removing a large amount of specification in the standard library by replacing it with blanket wording that these rewrites apply. I have surveyed the standard library to get an overview of what would change in response to this, and to ensure that the changes would work properly.
