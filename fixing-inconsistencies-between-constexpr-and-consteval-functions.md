@@ -13,7 +13,7 @@ A `consteval` function is the same as a `constexpr` function except that:
 3) All overrides of a virtual function must be `consteval` if the base function is `consteval`, otherwise they must not be `consteval`.
 4) A `consteval` function is evaluated even in contexts that would otherwise be unevaluated.
 
-The first point is the intended difference between the two functions. The second point is a consequence of the first. The third point (`virtual` functions) ends up making sense as a difference between them because of what is fundamentally possible. The final point seems like an unfortunate inconsistency in the language. This paper proposes changing the rules surrounding bullet 4 to unify the behavior of `consteval` and `constexpr` functions for C++20. There is also a discussion of `virtual` functions at the end with a proposal for a minor addition targeted at C++23.
+The first point is the intended difference between the two functions. The second point is a consequence of the first. The third point (`virtual` functions) ends up making sense as a difference between them because of what is fundamentally possible. The final point seems like an unfortunate inconsistency in the language. This paper proposes changing the rules surrounding bullet 4 to unify the behavior of `consteval` and `constexpr` functions for C++20.
 
 ## Revision history
 
