@@ -693,11 +693,11 @@ Most of these are iterators that return either by value or by `decltype(auto)` f
 
 The insert iterators and `ostream_iterator` technically gain an `operator->`, but `operator*` returns a reference to `*this` and the only members of those types are types, constructors, and operators, none of which are accessible through `operator->` using the syntaxes that are supported to access the standard library.
 
-#### Types that will gain `operator->` and it is a bad thing
+#### Types that will gain `operator->` and it's weird either way
 
 - `ostreambuf_iterator`
 
-`ostreambuf_iterator` is the one bad example for which we would want to explicitly delete `operator->`. It has an `operator*` that returns `*this`, and it has a member function `failed()`, so it would allow calling `it->failed()` with the same meaning as `it.failed()`.
+`ostreambuf_iterator` is the one example for which we might possibly want to explicitly delete `operator->`. It has an `operator*` that returns `*this`, and it has a member function `failed()`, so it would allow calling `it->failed()` with the same meaning as `it.failed()`.
 
 #### Types that have `operator->` now and it behaves the same as the synthesized operator
 
