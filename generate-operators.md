@@ -737,7 +737,7 @@ All types in this section have an `operator->` that is identical to the synthesi
 - `filter_view::iterator`
 - `join_view::iterator`
 
-All of these types currently define their `operator->` as deferring to the base iterator's `operator->`. However, the Cpp17InputIterator requirements specify that `a->m` is equivalent to `(*a).m`, so anything a user passes to `reverse_iterator` must already meet this. `common_iterator`, `filter_view::iterator`, and `join_view::iterator` are new in C++20 and require `input_or_output_iterator` of their parameter, which says nothing about `->`. This means that based on what we have promised about our interfaces, we could implement all of these under the language proposal without breaking compatibility if we change those three for C++20. They would be changed to return `addressof(**this)`
+All of these types that are adapter types define their `operator->` as deferring to the base iterator's `operator->`. However, the Cpp17InputIterator requirements specify that `a->m` is equivalent to `(*a).m`, so anything a user passes to `reverse_iterator` must already meet this. `common_iterator`, `filter_view::iterator`, and `join_view::iterator` are new in C++20 and require `input_or_output_iterator` of their parameter, which says nothing about `->`. This means that based on what we have promised about our interfaces, we could implement all of these under the language proposal without breaking compatibility if we change those three for C++20. They would be changed to return only `addressof(**this)` for C++20 to leave room for using the generated version in C++23.
 
 #### `iterator_traits`
 
