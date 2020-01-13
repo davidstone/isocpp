@@ -40,7 +40,7 @@ This proposal follows the lead of `operator<=>` (see [Consistent Comparison](htt
 ### Changes in R2
 
 * Postfix `operator++` and `operator--` return `void` for non-copyable types.
-* Added "Approaches considered"
+* Added "Other approaches considered"
 * Expanded section on to_address and pointer_traits
 
 ## Design Goals
