@@ -763,7 +763,7 @@ The following standard types can be used to instantiate `pointer_traits`:
 
 However, none of them are specified to have member `to_address`.
 
-`std::to_address` is specified in terms of calling `operator->` with member function syntax. It uses this as a fallback if `pointer_traits<Ptr>::to_address(p)` is not well-formed. This leaves us with several options.
+Note that `span` does not have `operator->` and is thus not relevant to the below discussion at all. `unique_ptr`, `shared_ptr`, and `weak_ptr` are not iterators, and are thus minimally relevant to the below discussion.
 
 1. Leave this function as-is and specify that all of the types that currently have `operator->` have a specialization of `pointer_traits` that defines `pointer_traits<T>::to_address`
 2. Specify that all types that currently have `operator->` work with `std::to_address`
