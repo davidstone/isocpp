@@ -494,7 +494,7 @@ Given the path we took for `operator<=>` of removing manual definitions of opera
 - `chrono::duration` (also `*=`, `/=`, `%=`)
 - `chrono::time_point`
 
-The specification of the iterator adapters (other than `elements_view::iterator`) have an `operator+` that calls some underlying type's `operator+` and an `operator+=` that call some underlying type's `operator+=`. The new `random_access_iterator` concept and the old `Cpp17RandomAccessIterator` requirements table already state that if your type is a random access iterator, the two operations must be equivalent, which should mean the two are interchangeable. `elements_view::iterator` wraps a user-defined iterator is currently specified as always calling `+=`.
+The specification of the iterator adapters (other than `elements_view::iterator`) have an `operator+` that calls some underlying type's `operator+` and an `operator+=` that call some underlying type's `operator+=`. The new `random_access_iterator` concept and the old `Cpp17RandomAccessIterator` requirements table already state that if your type is a random access iterator, the two operations must be equivalent, which should mean the two are interchangeable. `elements_view::iterator` wraps a user-defined iterator is currently specified as always calling `+=`, but again, it should also be equivalent.
 
 For `chrono::duration`, the standard states that its template parameter "`Rep` shall be an arithmetic type or a class emulating an arithmetic type". It is unclear how true this emulation must be, but presumably it requires that arithmetic operations have the usual equivalences, in which case it should not matter which specific operators are called.
 
@@ -597,6 +597,8 @@ These types support `lhs += 1` and `lhs -= 1`, and their underlying type support
 - `mask_array`
 - `indirect_array`
 - `filesystem::path` (`operator++` only)
+
+For `basic_string` and `filesystem::path`, it is quite strange already that users can call `value += 1`. This is allowed only because of the implicit conversion from `int` to `char`.
 
 ### Postfix `operator++` and `operator--`
 
