@@ -9,22 +9,22 @@ Audience: Evolution Working Group (EWG), Library Evolution Working Group (LEWG)<
 
 This proposal follows the lead of `operator<=>` (see [Consistent Comparison](http://open-std.org/JTC1/SC22/WG21/docs/papers/2017/p0515r3.pdf)) by generating rewrite rules if a particular operator does not exist in current code. All of these operators would support `= default` to explicitly opt in and `= delete` to explicitly opt out.
 
-- Rewrite `lhs += rhs` as `lhs = std::move(lhs) + rhs`, but evaluate `lhs` only once
-- Rewrite `lhs -= rhs` as `lhs = std::move(lhs) - rhs`, but evaluate `lhs` only once
-- Rewrite `lhs *= rhs` as `lhs = std::move(lhs) * rhs`, but evaluate `lhs` only once
-- Rewrite `lhs /= rhs` as `lhs = std::move(lhs) / rhs`, but evaluate `lhs` only once
-- Rewrite `lhs %= rhs` as `lhs = std::move(lhs) % rhs`, but evaluate `lhs` only once
-- Rewrite `lhs &= rhs` as `lhs = std::move(lhs) & rhs`, but evaluate `lhs` only once
-- Rewrite `lhs |= rhs` as `lhs = std::move(lhs) | rhs`, but evaluate `lhs` only once
-- Rewrite `lhs ^= rhs` as `lhs = std::move(lhs) ^ rhs`, but evaluate `lhs` only once
-- Rewrite `lhs <<= rhs` as `lhs = std::move(lhs) << rhs`, but evaluate `lhs` only once
-- Rewrite `lhs >>= rhs` as `lhs = std::move(lhs) >> rhs`, but evaluate `lhs` only once
-- Rewrite `++x` as `x += 1`
-- Rewrite `--x` as `x -= 1`
-- Rewrite `x++` as `++x` but return a copy of the original value
-- Rewrite `x--` as `--x` but return a copy of the original value
-- Rewrite `lhs->rhs` as `(*lhs).rhs`
-- Rewrite `lhs->*rhs` as `(*lhs).*rhs`
+* Rewrite `lhs += rhs` as `lhs = std::move(lhs) + rhs`, but evaluate `lhs` only once
+* Rewrite `lhs -= rhs` as `lhs = std::move(lhs) - rhs`, but evaluate `lhs` only once
+* Rewrite `lhs *= rhs` as `lhs = std::move(lhs) * rhs`, but evaluate `lhs` only once
+* Rewrite `lhs /= rhs` as `lhs = std::move(lhs) / rhs`, but evaluate `lhs` only once
+* Rewrite `lhs %= rhs` as `lhs = std::move(lhs) % rhs`, but evaluate `lhs` only once
+* Rewrite `lhs &= rhs` as `lhs = std::move(lhs) & rhs`, but evaluate `lhs` only once
+* Rewrite `lhs |= rhs` as `lhs = std::move(lhs) | rhs`, but evaluate `lhs` only once
+* Rewrite `lhs ^= rhs` as `lhs = std::move(lhs) ^ rhs`, but evaluate `lhs` only once
+* Rewrite `lhs <<= rhs` as `lhs = std::move(lhs) << rhs`, but evaluate `lhs` only once
+* Rewrite `lhs >>= rhs` as `lhs = std::move(lhs) >> rhs`, but evaluate `lhs` only once
+* Rewrite `++x` as `x += 1`
+* Rewrite `--x` as `x -= 1`
+* Rewrite `x++` as `++x` but return a copy of the original value
+* Rewrite `x--` as `--x` but return a copy of the original value
+* Rewrite `lhs->rhs` as `(*lhs).rhs`
+* Rewrite `lhs->*rhs` as `(*lhs).*rhs`
 
 ## Revision History
 
@@ -275,10 +275,10 @@ This example uses a struct with three data members, but the generated code is id
 
 To see how some major compilers handle various ways of defining operator overloads for this type, you can see [this Godbolt link](https://godbolt.org/z/D9UbSF). The compiler flags used are maximum optimization with no special architecture-specific flags like `-march` or `-mtune`, but a cursory examination of various values for those flags showed it did not change interpretation of the results. For example:
 
-- llvm generates identical instructions (in a slightly different order) for `+` defined directly, for `+=` defined in terms of `+`, and for `+=` defined directly, but it generates worse code for `+` defined in terms of `+=`. In other words, it is best to define `+=` in terms of `+`.
-- gcc generates identical instructions (in a slightly different order) for all combinations. In other words, it does not matter which is the basis.
-- MSVC generates identical instructions (in a slightly different order) for `+` defined directly and for `+=` defined directly, but it generates the same worse code for whichever operator is defined in terms of the other.
-- ICC generates identical code for `+=` defined directly or in terms of `+`. It generates worse code for `+` defined in terms of `+=` than for `+` defined directly.
+* llvm generates identical instructions (in a slightly different order) for `+` defined directly, for `+=` defined in terms of `+`, and for `+=` defined directly, but it generates worse code for `+` defined in terms of `+=`. In other words, it is best to define `+=` in terms of `+`.
+* gcc generates identical instructions (in a slightly different order) for all combinations. In other words, it does not matter which is the basis.
+* MSVC generates identical instructions (in a slightly different order) for `+` defined directly and for `+=` defined directly, but it generates the same worse code for whichever operator is defined in terms of the other.
+* ICC generates identical code for `+=` defined directly or in terms of `+`. It generates worse code for `+` defined in terms of `+=` than for `+` defined directly.
 
 To summarize, it is better for llvm and ICC to define `+` as the basis operation, irrelevant for gcc, and on MSVC you want to define neither in terms of the other.
 
@@ -286,16 +286,16 @@ To summarize, it is better for llvm and ICC to define `+` as the basis operation
 
 We should synthesize compound assignment operators following the same rules as we follow for `operator<=>`: the overload set for the compound assignment operators include a synthesized operator, which is considered a worse match than a non-synthesized operator. In other words, `lhs @= rhs` has a candidate overload of `lhs = std::move(lhs) @ rhs`. Users can explicitly opt in to using such an operator rewrite by specifying `= default`. This is entirely for symmetry, as it is not especially useful, just like `bool operator!=(T, T) = default;` is not especially useful. They can opt out by using `= delete`. This section of the proposal would synthesize rewrite rules for the following operators:
 
-- `operator+=`
-- `operator-=`
-- `operator*=`
-- `operator/=`
-- `operator%=`
-- `operator&=`
-- `operator|=`
-- `operator^=`
-- `operator<<=`
-- `operator>>=`
+* `operator+=`
+* `operator-=`
+* `operator*=`
+* `operator/=`
+* `operator%=`
+* `operator&=`
+* `operator|=`
+* `operator^=`
+* `operator<<=`
+* `operator>>=`
 
 ## Prefix Increment and Decrement
 
@@ -466,34 +466,34 @@ Given the path we took for `operator<=>` of removing manual definitions of opera
 
 #### Types that can have all of their `operator@=` defaulted
 
-- `basic_string`: Can remove all `operator+=` except the overload taking `initializer_list` (or we could add `basic_string + initializer_list`)
-- `basic_string::iterator`: `+=`, `-=`
-- `array::iterator`: `+=`, `-=`
-- `deque::iterator`: `+=`, `-=`
-- `vector::iterator`: `+=`, `-=`
-- `valarray::iterator`: `+=`, `-=`
-- `iota_view::iterator`: `+=`, `-=`
-- `elements_view::iterator`: `+=`, `-=`
-- `complex`: `+=`, `-=`, `*=`, `/=`
-- `valarray`: `+=`, `-=`, `*=`, `/=`, `%=`, `^=`, `&=`, `|=`, `<<=`, `>>=`
-- `chrono::day`: `+=`, `-=`
-- `chrono::month`: `+=`, `-=`
-- `chrono::year`: `+=`, `-=`
-- `chrono::weekday`: `+=`, `-=`
-- `chrono::year_month`: `+=`, `-=`
-- `chrono::year_month_day`: `+=`, `-=`
-- `chrono::year_month_day_last`: `+=`, `-=`
-- `chrono::year_month_weekday`: `+=`, `-=`
-- `chrono::year_month_weekday_last`: `+=`, `-=`
-- "bitmask type": `^=`, `&=`, `|=` can be removed from the exposition
-- `byte`: `^=`, `&=`, `|=`, `<<=`, `>>=`
-- `bitset`: `^=`, `&=`, `|=`, `<<=`, `>>=`
-- `reverse_iterator`
-- `move_iterator`
-- `counted_iterator`
-- `transform_view::iterator`
-- `chrono::duration` (also `*=`, `/=`, `%=`)
-- `chrono::time_point`
+* `basic_string`: Can remove all `operator+=` except the overload taking `initializer_list` (or we could add `basic_string + initializer_list`)
+* `basic_string::iterator`: `+=`, `-=`
+* `array::iterator`: `+=`, `-=`
+* `deque::iterator`: `+=`, `-=`
+* `vector::iterator`: `+=`, `-=`
+* `valarray::iterator`: `+=`, `-=`
+* `iota_view::iterator`: `+=`, `-=`
+* `elements_view::iterator`: `+=`, `-=`
+* `complex`: `+=`, `-=`, `*=`, `/=`
+* `valarray`: `+=`, `-=`, `*=`, `/=`, `%=`, `^=`, `&=`, `|=`, `<<=`, `>>=`
+* `chrono::day`: `+=`, `-=`
+* `chrono::month`: `+=`, `-=`
+* `chrono::year`: `+=`, `-=`
+* `chrono::weekday`: `+=`, `-=`
+* `chrono::year_month`: `+=`, `-=`
+* `chrono::year_month_day`: `+=`, `-=`
+* `chrono::year_month_day_last`: `+=`, `-=`
+* `chrono::year_month_weekday`: `+=`, `-=`
+* `chrono::year_month_weekday_last`: `+=`, `-=`
+* "bitmask type": `^=`, `&=`, `|=` can be removed from the exposition
+* `byte`: `^=`, `&=`, `|=`, `<<=`, `>>=`
+* `bitset`: `^=`, `&=`, `|=`, `<<=`, `>>=`
+* `reverse_iterator`
+* `move_iterator`
+* `counted_iterator`
+* `transform_view::iterator`
+* `chrono::duration` (also `*=`, `/=`, `%=`)
+* `chrono::time_point`
 
 The specification of the iterator adapters (other than `elements_view::iterator`) have an `operator+` that calls some underlying type's `operator+` and an `operator+=` that call some underlying type's `operator+=`. The new `random_access_iterator` concept and the old `Cpp17RandomAccessIterator` requirements table already state that if your type is a random access iterator, the two operations must be equivalent, which should mean the two are interchangeable. `elements_view::iterator` wraps a user-defined iterator is currently specified as always calling `+=`, but again, it should also be equivalent.
 
@@ -501,7 +501,7 @@ For `chrono::duration`, the standard states that its template parameter "`Rep` s
 
 #### Types that mysteriously do not have `a + b` but do have `a += b`, even though they have `a / b` and `a /= b`
 
-- `filesystem::path`
+* `filesystem::path`
 
 If we define `operator+` for this type, we could then get rid of `operator+=`. Pros: increased uniformity and better support for functional programming styles. Cons: Would make the following code valid:
 
@@ -516,12 +516,12 @@ The synthesized version of `operator/=` is correct for `filesystem::path`.
 
 #### Correctly unaffected types
 
-- `slice_array`
-- `gslice_array`
-- `mask_array`
-- `indirect_array`
-- `atomic_ref`
-- `atomic`
+* `slice_array`
+* `gslice_array`
+* `mask_array`
+* `indirect_array`
+* `atomic_ref`
+* `atomic`
 
 These have only compound assignment operators.
 
@@ -529,75 +529,75 @@ These have only compound assignment operators.
 
 #### Types that have the operator now and it behaves the same as the synthesized operator (`a += 1`)
 
-- `basic_string::iterator`
-- `array::iterator`
-- `deque::iterator`
-- `vector::iterator`
-- `valarray::iterator`
-- `atomic<integral>` and `atomic<pointer>`
-- `atomic_ref<integral>` and `atomic_ref<pointer>`
+* `basic_string::iterator`
+* `array::iterator`
+* `deque::iterator`
+* `vector::iterator`
+* `valarray::iterator`
+* `atomic<integral>` and `atomic<pointer>`
+* `atomic_ref<integral>` and `atomic_ref<pointer>`
 
 #### Types that have the operator now but do not or might not have `+=` or `-=` (no change from this proposal)
 
-- `forward_list::iterator` (`++` only)
-- `list::iterator`
-- `map::iterator`
-- `set::iterator`
-- `multimap::iterator`
-- `multiset::iterator`
-- `unordered_map::iterator`
-- `unordered_set::iterator`
-- `unordered_multimap::iterator`
-- `unordered_multiset::iterator`
-- `back_insert_iterator` (`++` only)
-- `front_insert_iterator` (`++` only)
-- `insert_iterator` (`++` only)
-- `reverse_iterator`
-- `move_iterator`
-- `common_iterator`
-- `counted_iterator`
-- `istream_iterator` (`++` only)
-- `ostream_iterator` (`++` only)
-- `istreambuf_iterator` (`++` only)
-- `ostreambuf_iterator` (`++` only)
-- `iota_view::iterator`
-- `filter_view::iterator`
-- `transform_view::iterator`
-- `join_view::iterator` (`++` only)
-- `split_view::outer_iterator` (`++` only)
-- `split_view::inner_iterator` (`++` only)
-- `basic_istream_view::iterator` (`++` only)
-- `elements_view::iterator`
-- `directory_iterator` (`++` only)
-- `recursive_directory_iterator` (`++` only)
-- `regex_iterator` (`++` only)
-- `regex_token_iterator` (`++` only)
+* `forward_list::iterator` (`++` only)
+* `list::iterator`
+* `map::iterator`
+* `set::iterator`
+* `multimap::iterator`
+* `multiset::iterator`
+* `unordered_map::iterator`
+* `unordered_set::iterator`
+* `unordered_multimap::iterator`
+* `unordered_multiset::iterator`
+* `back_insert_iterator` (`++` only)
+* `front_insert_iterator` (`++` only)
+* `insert_iterator` (`++` only)
+* `reverse_iterator`
+* `move_iterator`
+* `common_iterator`
+* `counted_iterator`
+* `istream_iterator` (`++` only)
+* `ostream_iterator` (`++` only)
+* `istreambuf_iterator` (`++` only)
+* `ostreambuf_iterator` (`++` only)
+* `iota_view::iterator`
+* `filter_view::iterator`
+* `transform_view::iterator`
+* `join_view::iterator` (`++` only)
+* `split_view::outer_iterator` (`++` only)
+* `split_view::inner_iterator` (`++` only)
+* `basic_istream_view::iterator` (`++` only)
+* `elements_view::iterator`
+* `directory_iterator` (`++` only)
+* `recursive_directory_iterator` (`++` only)
+* `regex_iterator` (`++` only)
+* `regex_token_iterator` (`++` only)
 
 #### Would gain `operator++` and `operator--`
 
-- `complex`
-- `atomic<floating_point>`
+* `complex`
+* `atomic<floating_point>`
 
 These types support `lhs += 1` and `lhs -= 1`, and their underlying type supports `++a` and `--a`. Discussion on the reflector did not turn up any reason for this to not be present, just that it wasn't deemed particularly useful.
 
 #### Needs to keep existing version because the rewrite would not compile
 
-- `chrono::duration`
-- `chrono::time_point`
-- `chrono::day`
-- `chrono::month`
-- `chrono::year`
-- `chrono::weekday`
+* `chrono::duration`
+* `chrono::time_point`
+* `chrono::day`
+* `chrono::month`
+* `chrono::year`
+* `chrono::weekday`
 
 #### Does not have `operator++` or `operator--` now, and should not have it (`= delete`)
 
-- `basic_string` (`operator++` only)
-- `valarray`
-- `slice_array`
-- `gslice_array`
-- `mask_array`
-- `indirect_array`
-- `filesystem::path` (`operator++` only)
+* `basic_string` (`operator++` only)
+* `valarray`
+* `slice_array`
+* `gslice_array`
+* `mask_array`
+* `indirect_array`
+* `filesystem::path` (`operator++` only)
 
 For `basic_string` and `filesystem::path`, it is quite strange already that users can call `value += 1`. This is allowed only because of the implicit conversion from `int` to `char`.
 
@@ -605,66 +605,66 @@ For `basic_string` and `filesystem::path`, it is quite strange already that user
 
 #### Types that have the operator now and it behaves the same as the synthesized operator
 
-- `basic_string::iterator`
-- `array::iterator`
-- `deque::iterator`
-- `vector::iterator`
-- `forward_list::iterator` (`++` only)
-- `list::iterator`
-- `map::iterator`
-- `set::iterator`
-- `multimap::iterator`
-- `multiset::iterator`
-- `unordered_map::iterator`
-- `unordered_set::iterator`
-- `unordered_multimap::iterator`
-- `unordered_multiset::iterator`
-- `valarray::iterator`
-- `reverse_iterator`
-- `back_insert_iterator` (`++` only)
-- `front_insert_iterator` (`++` only)
-- `insert_iterator` (`++` only)
-- `istream_iterator` (`++` only)
-- `chrono::duration`
-- `chrono::time_point`
-- `chrono::day`
-- `chrono::month`
-- `chrono::year`
-- `chrono::weekday`
-- `regex_iterator` (`++` only)
-- `regex_token_iterator` (`++` only)
-- `move_iterator`
-- `iota_view::iterator`
-- `filter_view::iterator`
-- `transform_view::iterator`
-- `join_view::iterator`
-- `split_view::outer_iterator`
-- `split_view::inner_iterator`
-- `basic_istream_view::iterator`
-- `elements_view::iterator`
+* `basic_string::iterator`
+* `array::iterator`
+* `deque::iterator`
+* `vector::iterator`
+* `forward_list::iterator` (`++` only)
+* `list::iterator`
+* `map::iterator`
+* `set::iterator`
+* `multimap::iterator`
+* `multiset::iterator`
+* `unordered_map::iterator`
+* `unordered_set::iterator`
+* `unordered_multimap::iterator`
+* `unordered_multiset::iterator`
+* `valarray::iterator`
+* `reverse_iterator`
+* `back_insert_iterator` (`++` only)
+* `front_insert_iterator` (`++` only)
+* `insert_iterator` (`++` only)
+* `istream_iterator` (`++` only)
+* `chrono::duration`
+* `chrono::time_point`
+* `chrono::day`
+* `chrono::month`
+* `chrono::year`
+* `chrono::weekday`
+* `regex_iterator` (`++` only)
+* `regex_token_iterator` (`++` only)
+* `move_iterator`
+* `iota_view::iterator`
+* `filter_view::iterator`
+* `transform_view::iterator`
+* `join_view::iterator`
+* `split_view::outer_iterator`
+* `split_view::inner_iterator`
+* `basic_istream_view::iterator`
+* `elements_view::iterator`
 
 #### Types that defer to a wrapped postfix `++` for iterators that do not meet `forward_iterator`
 
-- `common_iterator`
-- `counted_iterator`
+* `common_iterator`
+* `counted_iterator`
 
 Regardless of what happens with this proposal, these types sometimes return their own type and call the wrapped type's prefix `operator++`, and sometimes returns the result of calling the wrapped type's postfix `operator++`. This is an inconsistent design that probably deserves further discussion.
 
 #### Types that return a reference from postfix `++`
 
-- `ostream_iterator`
-- `ostreambuf_iterator`
+* `ostream_iterator`
+* `ostreambuf_iterator`
 
 #### Types that would do something bad with the synthesized version and thus need to keep their existing overload
 
-- `istreambuf_iterator` has a postfix `operator++` that returns a proxy that keeps the old value alive
-- `directory_iterator` has no postfix, but it is a copyable `input_iterator`.
-- `recursive_directory_iterator` has no postfix, but it is a copyable `input_iterator`
+* `istreambuf_iterator` has a postfix `operator++` that returns a proxy that keeps the old value alive
+* `directory_iterator` has no postfix, but it is a copyable `input_iterator`.
+* `recursive_directory_iterator` has no postfix, but it is a copyable `input_iterator`
 
 #### Types that would return less information than is currently returned and thus need to keep their existing overload
 
-- `atomic_ref`
-- `atomic`
+* `atomic_ref`
+* `atomic`
 
 These overloads would need to stay. The postfix operators return a copy of the underlying value as it was before the increment. Under the language rules of this proposal, if the manual postfix operators were removed from `std::atomic`, the postfix operator would return `void` instead. If the manual postfix operators were removed from `atomic_ref`, it would return a copy of the `atomic_ref` rather than the value.
 
@@ -672,31 +672,31 @@ These overloads would need to stay. The postfix operators return a copy of the u
 
 #### Types that will gain `operator->` and this is a good thing
 
-- `move_iterator` currently has a deprecated `operator->`
-- `counted_iterator`
-- `istreambuf_iterator`
-- `istreambuf_iterator::proxy` (exposition only type)
-- `iota_view::iterator`
-- `transform_view::iterator`
-- `split_view::outer_iterator`
-- `split_view::inner_iterator`
-- `basic_istream_view::iterator`
-- `elements_view::iterator`
+* `move_iterator` currently has a deprecated `operator->`
+* `counted_iterator`
+* `istreambuf_iterator`
+* `istreambuf_iterator::proxy` (exposition only type)
+* `iota_view::iterator`
+* `transform_view::iterator`
+* `split_view::outer_iterator`
+* `split_view::inner_iterator`
+* `basic_istream_view::iterator`
+* `elements_view::iterator`
 
 Most of these are iterators that return either by value or by `decltype(auto)` from some user-defined function. It is not possible to safely and consistently define `operator->` for these types, so we do not always do so, but under this proposal they would all do the right thing.
 
 #### Types that will technically gain `operator->` but it is not observable
 
-- `insert_iterator`
-- `back_insert_iterator`
-- `front_insert_iterator`
-- `ostream_iterator`
+* `insert_iterator`
+* `back_insert_iterator`
+* `front_insert_iterator`
+* `ostream_iterator`
 
 The insert iterators and `ostream_iterator` technically gain an `operator->`, but `operator*` returns a reference to `*this` and the only members of those types are types, constructors, and operators, none of which are accessible through `operator->` using the syntaxes that are supported to access the standard library.
 
 #### Types that will gain `operator->` and it's weird either way
 
-- `ostreambuf_iterator`
+* `ostreambuf_iterator`
 
 `ostreambuf_iterator` is the one example for which we might possibly want to explicitly delete `operator->`. It has an `operator*` that returns `*this`, and it has a member function `failed()`, so it would allow calling `it->failed()` with the same meaning as `it.failed()`.
 
@@ -704,39 +704,39 @@ The insert iterators and `ostream_iterator` technically gain an `operator->`, bu
 
 All types in this section have an `operator->` that is identical to the synthesized version if we do not wish to support users calling with the syntax `thing.operator->()`.
 
-- `optional`
-- `unique_ptr` (single object)
-- `shared_ptr`
-- `weak_ptr`
-- `basic_string::iterator`
-- `basic_string_view::iterator`
-- `array::iterator`
-- `deque::iterator`
-- `forward_list::iterator`
-- `list::iterator`
-- `vector::iterator`
-- `map::iterator`
-- `multimap::iterator`
-- `set::iterator`
-- `multiset::iterator`
-- `unordered_map::iterator`
-- `unordered_set::iterator`
-- `unordered_multimap::iterator`
-- `unordered_multiset::iterator`
-- `span::iterator`
-- `istream_iterator`
-- `valarray::iterator`
-- `tzdb_list::const_iterator`
-- `filesystem::path::iterator`
-- `directory_iterator`
-- `recursive_directory_iterator`
-- `match_results::iterator`
-- `regex_iterator`
-- `regex_token_iterator`
-- `reverse_iterator`
-- `common_iterator`
-- `filter_view::iterator`
-- `join_view::iterator`
+* `optional`
+* `unique_ptr` (single object)
+* `shared_ptr`
+* `weak_ptr`
+* `basic_string::iterator`
+* `basic_string_view::iterator`
+* `array::iterator`
+* `deque::iterator`
+* `forward_list::iterator`
+* `list::iterator`
+* `vector::iterator`
+* `map::iterator`
+* `multimap::iterator`
+* `set::iterator`
+* `multiset::iterator`
+* `unordered_map::iterator`
+* `unordered_set::iterator`
+* `unordered_multimap::iterator`
+* `unordered_multiset::iterator`
+* `span::iterator`
+* `istream_iterator`
+* `valarray::iterator`
+* `tzdb_list::const_iterator`
+* `filesystem::path::iterator`
+* `directory_iterator`
+* `recursive_directory_iterator`
+* `match_results::iterator`
+* `regex_iterator`
+* `regex_token_iterator`
+* `reverse_iterator`
+* `common_iterator`
+* `filter_view::iterator`
+* `join_view::iterator`
 
 All of these types that are adapter types define their `operator->` as deferring to the base iterator's `operator->`. However, the Cpp17InputIterator requirements specify that `a->m` is equivalent to `(*a).m`, so anything a user passes to `reverse_iterator` must already meet this. `common_iterator`, `filter_view::iterator`, and `join_view::iterator` are new in C++20 and require `input_or_output_iterator` of their parameter, which says nothing about `->`. This means that based on what we have promised about our interfaces, we could implement all of these under the language proposal without breaking compatibility if we change those three for C++20. They would be changed to return only `addressof(**this)` for C++20 to leave room for using the generated version in C++23.
 
@@ -756,11 +756,11 @@ My recommendation is 2, 3, or both.
 
 The following standard types can be used to instantiate `pointer_traits`:
 
-- `T *`
-- `unique_ptr`
-- `shared_ptr`
-- `weak_ptr`
-- `span`
+* `T *`
+* `unique_ptr`
+* `shared_ptr`
+* `weak_ptr`
+* `span`
 
 However, none of them are specified to have member `to_address`.
 
@@ -777,11 +777,11 @@ Note that `span` does not have `operator->` and is thus not relevant to the belo
 
 On a related note, it feels backward to define `std::to_address` in terms of `std::pointer_traits<I>::to_address`, since it means that if I write a `contiguous_iterator`, I need to specialize a class template with boilerplate of
 
-- `using pointer = ...`
-- `using element_type = ...`
-- `using difference_type = ...`
-- `template<typename U> using rebind = ...`
-- `static pointer pointer_to(element_type &)`
+* `using pointer = ...`
+* `using element_type = ...`
+* `using difference_type = ...`
+* `template<typename U> using rebind = ...`
+* `static pointer pointer_to(element_type &)`
 
 The status quo means that the following types can be given to `to_address` and it will happily return you a pointer:
 
@@ -808,5 +808,5 @@ How about the other way around? Perhaps we could define `-a` as `0 - a`? This co
 
 ## References
 
-- [Ranges TS: Post-Increment on Input and Output Iterators](http://www.open-std.org/jtc1/sc22/wg21/docs/papers/2017/p0541r1.html)
-- [Movability of Single-pass Iterators](http://www.open-std.org/jtc1/sc22/wg21/docs/papers/2019/p1207r1.html)
+* [Ranges TS: Post-Increment on Input and Output Iterators](http://www.open-std.org/jtc1/sc22/wg21/docs/papers/2017/p0541r1.html)
+* [Movability of Single-pass Iterators](http://www.open-std.org/jtc1/sc22/wg21/docs/papers/2019/p1207r1.html)
