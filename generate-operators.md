@@ -765,18 +765,31 @@ However, none of them are specified to have member `to_address`.
 
 Note that `span` does not have `operator->` and is thus not relevant to the below discussion at all. `unique_ptr`, `shared_ptr`, and `weak_ptr` are not iterators, and are thus minimally relevant to the below discussion.
 
+`std::to_address` is specified as calling `pointer_traits<Ptr>::to_address(p)` if that is well formed, otherwise calling `operator->` with member function syntax. This leaves us with several options:
+
 1. Leave this function as-is and specify that all of the types that currently have `operator->` have a specialization of `pointer_traits` that defines `pointer_traits<T>::to_address`
 2. Specify that all types that currently have `operator->` work with `std::to_address`
-3. Define a second fallback if `p.operator->()` is not valid that would be defined as `std::addressof(*p)`. This is similar to the question for `std::iterator_traits::pointer`.
-4. Decide that iterators that do not satisfy `contiguous_iterator` are not sufficiently "pointer like", and thus should not be used with `std::to_address`. This would require changing the definition for C++20. We would then say that calling `std::to_address` works for all `contiguous_iterator` types. This just pushes the question down the road a bit (we still have to decide how that works and how users opt in to this), but it dramatically reduces the number of types that would have to do this (in the standard, it would just be 6 types: `basic_string::iterator`, `basic_string_view::iterator`, `array::iterator`, `vector<non_bool>::iterator`, `span::iterator`, and `valarray::iterator`). If we go this route, we need to decide on option 1, 2, or 3 for those iterator types.
+3. Define a second fallback if `p.operator->()` is not valid that would be defined as `std::addressof(*p)`. This is similar to the question for `std::iterator_traits<I>::pointer`.
+4. Decide that iterators that do not satisfy `contiguous_iterator` are not sufficiently "pointer like", and thus should not be used with `std::to_address`. This would require changing the definition for C++20. We would then say that calling `std::to_address` works for all `contiguous_iterator` types. Whether something is a `contiguous_iterator` is currently specified via an opt-in tag definition. If we decide in favor of this option, that opt-in mechanism would no longer be strictly necessary -- whether `std::to_address` is valid would distinguish `random_access_iterator` from `contiguous_iterator`, and thus we could determine that the same way we can determine other iterator categories. This option dramatically reduces the number of types that would have to do anything special here (in the standard, it would be just 6 types: `basic_string::iterator`, `basic_string_view::iterator`, `array::iterator`, `vector<non_bool>::iterator`, `span::iterator`, and `valarray::iterator`).
 
-1 and 2 feel like the wrong approach -- they would mean that authors of iterator types still need to define their own `operator->`, or they must specialize some class template (if we agree that the current semantics with regard to iterators are correct), or they must overload `to_address` and we make that a customization point found by ADL.
+1 and 2 feel like the wrong approach -- they would mean that authors of iterator types still need to define their own `operator->`, or they must specialize some class template (if we agree that the current semantics with regard to iterators are correct), or they must overload `to_address` and we make that a customization point found by ADL. I strongly support option 4.
 
-## Summary of open questions
+On a related note, it feels backward to define `std::to_address` in terms of `std::pointer_traits<I>::to_address`, since it means that if I write a `contiguous_iterator`, I need to specialize a class template with boilerplate of
 
-- Should `ostream_iterator` and `ostreambuf_iterator` be changed to return void from postfix `operator++`?
-- How should `iterator_traits<I>::pointer` be defined? a) Do nothing => get a `void` typedef for types that use the language feature. b) Specify a further fallback => `decltype(std::addressof(*a))`. c) Deprecate the typedef.
-- How should `std::to_address` be defined?
+- `using pointer = ...`
+- `using element_type = ...`
+- `using difference_type = ...`
+- `template<typename U> using rebind = ...`
+- `static pointer pointer_to(element_type &)`
+
+The status quo means that the following types can be given to `to_address` and it will happily return you a pointer:
+
+* `std::list<T>::iterator` (with undefined behavior if one-past-the-end)
+* `std::optional<T>` (with undefined behavior if `!has_value()`)
+* `std::reverse_iterator<T>` (with undefined behavior if one-past-the-reverse-end)
+* Anything else with `operator->`
+
+This is especially troubling since `to_address` is the hook that a contiguous_iterator uses to convert to a raw pointer, and when using that hook, it is required for that expression to be valid even for the past-the-end iterator. I find it concerning that `to_address` is valid on all valid contiguous_iterators, including past-the-end iterators, but it is undefined behavior in general for other past-the-end iterators.
 
 ## Things with no recommendations to change
 
