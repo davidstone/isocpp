@@ -747,7 +747,7 @@ All of these types that are adapter types define their `operator->` as deferring
 2. Specify a further fallback of `decltype(std::addressof(*a))` to maintain current behavior and allow users to delete their own `operator->` without changing the results of `iterator_traits`
 3. Deprecate or remove the `pointer` typedef, as it is not used anywhere in the standard except to define other `pointer` typedefs and it seems to have very little usefulness outside the standard.
 
-My recommendation is either 2 or 3.
+My recommendation is 2, 3, or both.
 
 #### `to_address` and `pointer_traits`
 
