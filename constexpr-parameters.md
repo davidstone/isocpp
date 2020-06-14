@@ -2,7 +2,7 @@
 
 <pre>Document Number: P1045R1
 Date: 2019-09-27
-Author: David Stone (david.stone@uber.com, david@doublewise.net)
+Author: David Stone (david@doublewise.net)
 Audience: Evolution Working Group (EWG)</pre>
 
 ## Abstract
