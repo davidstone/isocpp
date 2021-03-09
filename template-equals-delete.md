@@ -7,7 +7,7 @@ Audience: Evolution Working Group (EWG)</pre>
 
 ## Summary
 
-We can delete function overloads. This paper proposes extending the functionality to variable templates and class templates. This paper does not propose allowing deleting non-template classes.
+We can delete function overloads. This paper proposes extending the functionality to variable templates and class templates. This paper does not propose allowing deleting non-template classes or variables.
 
 ```
 // Delete primary variable template, allow specializations
