@@ -1,7 +1,7 @@
 # template = delete
 
 <pre>Document Number: D2041R1
-Date: 2021-02-20
+Date: 2021-03-09
 Author: David Stone (davidfromonline@gmail.com)
 Audience: Evolution Working Group (EWG)</pre>
 
@@ -37,6 +37,10 @@ struct t {
 template<>
 struct t<int> = delete;
 ```
+
+## Changes since R0
+
+R0 suggested only allowing `= delete` for variable templates. This version also supports deleting class templates. Furthermore, it looks like the ability to delete deduction guides was approved long ago, but never made it into the working draft. This paper also adds a list of other types of entitites and a discussion of why to not delete those.
 
 ## Conceptual basis
 
