@@ -317,5 +317,3 @@ void f() {
 	++x; // error
 }
 ```
-
-As far as I am aware, this pattern has approximately 0 uses in real code.
