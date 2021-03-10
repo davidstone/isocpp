@@ -82,7 +82,7 @@ A first attempt to do this today might look like this:
 
 ```
 template<typename T> requires false
-dint max_value;
+int max_value;
 
 template<std::unsigned_integral T>
 inline constexpr auto max_value<T> = T(-1);
